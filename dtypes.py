@@ -117,7 +117,10 @@ def dtype_to_ctype(dtype, with_fp_tex_hack=False):
 
 # {{{ c declarator parsing
 
-def parse_c_arg_backend(c_arg, scalar_arg_class, vec_arg_class):
+def parse_c_arg_backend(c_arg, scalar_arg_class, vec_arg_class,
+        name_to_dtype=None):
+    if name_to_dtype is None:
+        name_to_dtype = NAME_TO_DTYPE.__getitem__
     c_arg = c_arg.replace("const", "").replace("volatile", "")
 
     # process and remove declarator
@@ -139,7 +142,7 @@ def parse_c_arg_backend(c_arg, scalar_arg_class, vec_arg_class):
     tp = " ".join(tp.split())
 
     try:
-        dtype = NAME_TO_DTYPE[tp]
+        dtype = name_to_dtype(tp)
     except KeyError:
         raise ValueError("unknown type '%s'" % tp)
 
