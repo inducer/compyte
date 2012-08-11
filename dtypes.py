@@ -37,40 +37,91 @@ import numpy as np
 DTYPE_TO_NAME = {}
 NAME_TO_DTYPE = {}
 
+
+
+class TypeNameNotKnown(RuntimeError):
+    pass
+
+def get_or_register_dtype(c_names, dtype=None):
+    """Get or register a :class:`numpy.dtype` associated with the C type names in the
+    string list *c_names*. If *dtype* is `None`, no registration is performed, and the
+    :class:`numpy.dtype` must already have been registered. If so, it is returned.
+    If not, :exc:`TypeNameNotKnown` is raised.
+
+    If *dtype* is not `None`, registration is attempted. If the *c_names* are already
+    known and registered to identical :class:`numpy.dtype` objects, then the previously
+    registered type is returned. Otherwise, the type is registered.
+
+    .. versionadded:: 2012.2
+    """
+
+    if isinstance(c_names, str):
+        c_names = [c_names]
+
+    if dtype is None:
+        from pytools import single_valued
+        return single_valued(NAME_TO_DTYPE[name] for name in c_names)
+
+    dtype = np.dtype(dtype)
+
+    # check if we've seen an identical dtype, if so retrieve exact dtype object.
+    try:
+        existing_name = DTYPE_TO_NAME[dtype]
+    except KeyError:
+        existed = False
+    else:
+        existed = True
+        existing_dtype = NAME_TO_DTYPE[existing_name]
+        assert existing_dtype == dtype
+        dtype = existing_dtype
+
+    for nm in c_names:
+        try:
+            name_dtype = NAME_TO_DTYPE[nm]
+        except KeyError:
+            NAME_TO_DTYPE[nm] = dtype
+        else:
+            if name_dtype != dtype:
+                raise RuntimeError("name '%s' already registered to different dtype" % nm)
+
+    if not existed:
+        DTYPE_TO_NAME[dtype] = c_names[0]
+    if not str(dtype) in DTYPE_TO_NAME:
+        DTYPE_TO_NAME[str(dtype)] = c_names[0]
+
+    return dtype
+
+
 def register_dtype(dtype, c_names, alias_ok=False):
+    from warnings import warn
+    warn("register_dtype is deprecated. Use get_or_register_dtype instead.",
+            DeprecationWarning, stacklevel=2)
+
     if isinstance(c_names, str):
         c_names = [c_names]
 
     dtype = np.dtype(dtype)
 
-    # check if pre-existing
+    # check if we've seen this dtype before and error out if a) it was seen before
+    # and b) alias_ok is False.
 
     if not alias_ok and dtype in DTYPE_TO_NAME:
         raise RuntimeError("dtype '%s' already registered (as '%s', new names '%s')" 
                 % (dtype, DTYPE_TO_NAME[dtype], ", ".join(c_names)))
-    for nm in c_names:
-        if nm in NAME_TO_DTYPE and NAME_TO_DTYPE[nm] != dtype:
-            raise RuntimeError("name '%s' already registered" % nm)
 
-    for nm in c_names:
-        NAME_TO_DTYPE[nm] = dtype
+    get_or_register_dtype(dtype, c_names, alias_ok)
 
-    if not dtype in DTYPE_TO_NAME:
-        DTYPE_TO_NAME[dtype] = c_names[0]
-
-    if not str(dtype) in DTYPE_TO_NAME:
-        DTYPE_TO_NAME[str(dtype)] = c_names[0]
 
 def _fill_dtype_registry(respect_windows):
     from sys import platform
 
-    register_dtype(np.bool, "bool")
-    register_dtype(np.int8, "char")
-    register_dtype(np.uint8, "unsigned char")
-    register_dtype(np.int16, ["short", "signed short", "signed short int", "short signed int"])
-    register_dtype(np.uint16, ["unsigned short", "unsigned short int", "short unsigned int"])
-    register_dtype(np.int32, ["int", "signed int"])
-    register_dtype(np.uint32, ["unsigned", "unsigned int"])
+    get_or_register_dtype("bool", np.bool)
+    get_or_register_dtype("char", np.int8)
+    get_or_register_dtype("unsigned char", np.uint8)
+    get_or_register_dtype(["short", "signed short", "signed short int", "short signed int"], np.int16)
+    get_or_register_dtype(["unsigned short", "unsigned short int", "short unsigned int"], np.uint16)
+    get_or_register_dtype(["int", "signed int"], np.int32)
+    get_or_register_dtype(["unsigned", "unsigned int"], np.uint32)
 
     is_64_bit = tuple.__itemsize__ * 8 == 64
     if is_64_bit:
@@ -79,19 +130,23 @@ def _fill_dtype_registry(respect_windows):
         else:
             i64_name = "long"
 
-        register_dtype(np.int64, [i64_name, "%s int" % i64_name, "signed %s int" % i64_name,
-            "%s signed int" % i64_name])
-        register_dtype(np.uint64, ["unsigned %s" % i64_name, "unsigned %s int" % i64_name,
-            "%s unsigned int" % i64_name])
+        get_or_register_dtype(
+                [i64_name, "%s int" % i64_name, "signed %s int" % i64_name,
+                    "%s signed int" % i64_name],
+                np.int64)
+        get_or_register_dtype(
+                ["unsigned %s" % i64_name, "unsigned %s int" % i64_name,
+                    "%s unsigned int" % i64_name],
+                np.uint64)
 
     # http://projects.scipy.org/numpy/ticket/2017
     if is_64_bit:
-        register_dtype(np.uintp, ["unsigned %s" % i64_name], alias_ok=True)
+        get_or_register_dtype(["unsigned %s" % i64_name], np.uintp)
     else:
-        register_dtype(np.uintp, ["unsigned"], alias_ok=True)
+        get_or_register_dtype(["unsigned"], np.uintp)
 
-    register_dtype(np.float32, "float")
-    register_dtype(np.float64, "double")
+    get_or_register_dtype("float", np.float32)
+    get_or_register_dtype("double", np.float64)
 
 # }}}
 
