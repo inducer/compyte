@@ -109,7 +109,7 @@ def register_dtype(dtype, c_names, alias_ok=False):
         raise RuntimeError("dtype '%s' already registered (as '%s', new names '%s')" 
                 % (dtype, DTYPE_TO_NAME[dtype], ", ".join(c_names)))
 
-    get_or_register_dtype(dtype, c_names, alias_ok)
+    get_or_register_dtype(c_names, dtype)
 
 
 def _fill_dtype_registry(respect_windows):
