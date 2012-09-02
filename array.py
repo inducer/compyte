@@ -119,13 +119,33 @@ def as_strided(x, shape=None, strides=None):
     # http://projects.scipy.org/numpy/ticket/1873
 
     if not x.dtype.isbuiltin:
-        if (shape is not None and x.shape != shape) \
-                or (strides is not None and x.strides != strides):
-            raise NotImplementedError(
-                    "as_strided won't work on non-native arrays for now."
-                    "See http://projects.scipy.org/numpy/ticket/1873")
-        else:
+        if (shape is None or x.shape == shape) and \
+                (strides is None or x.strides == strides):
             return x
+
+        if shape is None:
+            shape = x.shape
+        strides = tuple(strides)
+
+        from pytools import product
+        if strides is not None and shape is not None \
+                and product(shape) == product(x.shape) \
+                and x.flags.forc:
+            # Workaround: If we're being asked to do what amounts to a
+            # contiguous reshape, at least do that.
+
+            if strides == f_contiguous_strides(x.dtype.itemsize, shape):
+                result = x.reshape(*shape, order="F")
+                assert result.strides == strides
+                return result
+            elif strides == c_contiguous_strides(x.dtype.itemsize, shape):
+                result = x.reshape(*shape, order="C")
+                assert result.strides == strides
+                return result
+
+        raise NotImplementedError(
+                "as_strided won't work on non-builtin arrays for now. "
+                "See http://projects.scipy.org/numpy/ticket/1873")
 
     interface = dict(x.__array_interface__)
     if shape is not None:
