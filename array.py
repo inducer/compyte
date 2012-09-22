@@ -135,11 +135,11 @@ def as_strided(x, shape=None, strides=None):
             # contiguous reshape, at least do that.
 
             if strides == f_contiguous_strides(x.dtype.itemsize, shape):
-                result = x.reshape(*shape, order="F")
+                result = x.reshape(-1).reshape(*shape, order="F")
                 assert result.strides == strides
                 return result
             elif strides == c_contiguous_strides(x.dtype.itemsize, shape):
-                result = x.reshape(*shape, order="C")
+                result = x.reshape(-1).reshape(*shape, order="C")
                 assert result.strides == strides
                 return result
 
