@@ -28,24 +28,14 @@ def c_contiguous_strides(itemsize, shape):
 
 class ArrayFlags:
     def __init__(self, ary):
-        self.array = ary
+        self.f_contiguous = (
+                ary.strides == f_contiguous_strides(
+                    ary.dtype.itemsize, ary.shape))
+        self.c_contiguous = (
+                ary.strides == c_contiguous_strides(
+                ary.dtype.itemsize, ary.shape))
 
-    @property
-    @memoize_method
-    def f_contiguous(self):
-        return self.array.strides == f_contiguous_strides(
-                self.array.dtype.itemsize, self.array.shape)
-
-    @property
-    @memoize_method
-    def c_contiguous(self):
-        return self.array.strides == c_contiguous_strides(
-                self.array.dtype.itemsize, self.array.shape)
-
-    @property
-    @memoize_method
-    def forc(self):
-        return self.f_contiguous or self.c_contiguous
+        self.forc = self.f_contiguous or self.c_contiguous
 
 
 
