@@ -48,9 +48,13 @@ def get_or_register_dtype(c_names, dtype=None):
     :class:`numpy.dtype` must already have been registered. If so, it is returned.
     If not, :exc:`TypeNameNotKnown` is raised.
 
-    If *dtype* is not `None`, registration is attempted. If the *c_names* are already
-    known and registered to identical :class:`numpy.dtype` objects, then the previously
-    registered type is returned. Otherwise, the type is registered.
+    If *dtype* is not `None`, registration is attempted. If the *c_names* are
+    already known and registered to identical :class:`numpy.dtype` objects,
+    then the previously dtype object of the previously  registered type is
+    returned. If the *c_names* are not yet known, the type is registered. If
+    one of the *c_names* is known but registered to a different type, an error
+    is raised. In this latter case, the type may end up partially registered
+    and any further behavior is undefined.
 
     .. versionadded:: 2012.2
     """
