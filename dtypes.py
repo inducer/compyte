@@ -30,23 +30,21 @@ OTHER DEALINGS IN THE SOFTWARE.
 import numpy as np
 
 
-
-
 # {{{ registry
 
 DTYPE_TO_NAME = {}
 NAME_TO_DTYPE = {}
 
 
-
 class TypeNameNotKnown(RuntimeError):
     pass
 
+
 def get_or_register_dtype(c_names, dtype=None):
-    """Get or register a :class:`numpy.dtype` associated with the C type names in the
-    string list *c_names*. If *dtype* is `None`, no registration is performed, and the
-    :class:`numpy.dtype` must already have been registered. If so, it is returned.
-    If not, :exc:`TypeNameNotKnown` is raised.
+    """Get or register a :class:`numpy.dtype` associated with the C type names
+    in the string list *c_names*. If *dtype* is `None`, no registration is
+    performed, and the :class:`numpy.dtype` must already have been registered.
+    If so, it is returned.  If not, :exc:`TypeNameNotKnown` is raised.
 
     If *dtype* is not `None`, registration is attempted. If the *c_names* are
     already known and registered to identical :class:`numpy.dtype` objects,
@@ -86,7 +84,8 @@ def get_or_register_dtype(c_names, dtype=None):
             NAME_TO_DTYPE[nm] = dtype
         else:
             if name_dtype != dtype:
-                raise RuntimeError("name '%s' already registered to different dtype" % nm)
+                raise RuntimeError("name '%s' already registered to "
+                        "different dtype" % nm)
 
     if not existed:
         DTYPE_TO_NAME[dtype] = c_names[0]
@@ -110,7 +109,7 @@ def register_dtype(dtype, c_names, alias_ok=False):
     # and b) alias_ok is False.
 
     if not alias_ok and dtype in DTYPE_TO_NAME:
-        raise RuntimeError("dtype '%s' already registered (as '%s', new names '%s')" 
+        raise RuntimeError("dtype '%s' already registered (as '%s', new names '%s')"
                 % (dtype, DTYPE_TO_NAME[dtype], ", ".join(c_names)))
 
     get_or_register_dtype(c_names, dtype)
@@ -125,8 +124,10 @@ def _fill_dtype_registry(respect_windows, include_bool=True):
 
     get_or_register_dtype("char", np.int8)
     get_or_register_dtype("unsigned char", np.uint8)
-    get_or_register_dtype(["short", "signed short", "signed short int", "short signed int"], np.int16)
-    get_or_register_dtype(["unsigned short", "unsigned short int", "short unsigned int"], np.uint16)
+    get_or_register_dtype(["short", "signed short",
+        "signed short int", "short signed int"], np.int16)
+    get_or_register_dtype(["unsigned short",
+        "unsigned short int", "short unsigned int"], np.uint16)
     get_or_register_dtype(["int", "signed int"], np.int32)
     get_or_register_dtype(["unsigned", "unsigned int"], np.uint32)
 
@@ -157,6 +158,7 @@ def _fill_dtype_registry(respect_windows, include_bool=True):
 
 # }}}
 
+
 # {{{ dtype -> ctype
 
 def dtype_to_ctype(dtype, with_fp_tex_hack=False):
@@ -173,13 +175,14 @@ def dtype_to_ctype(dtype, with_fp_tex_hack=False):
     try:
         return DTYPE_TO_NAME[dtype]
     except KeyError:
-        raise ValueError, "unable to map dtype '%s'" % dtype
+        raise ValueError("unable to map dtype '%s'" % dtype)
 
 # }}}
 
+
 # {{{ c declarator parsing
 
-def parse_c_arg_backend(c_arg, scalar_arg_class, vec_arg_class,
+def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
         name_to_dtype=None):
     if name_to_dtype is None:
         name_to_dtype = NAME_TO_DTYPE.__getitem__
@@ -196,9 +199,9 @@ def parse_c_arg_backend(c_arg, scalar_arg_class, vec_arg_class,
     name = decl_match.group(2)
 
     if decl_match.group(1) or decl_match.group(3) is not None:
-        arg_class = vec_arg_class
+        arg_class = vec_arg_factory
     else:
-        arg_class = scalar_arg_class
+        arg_class = scalar_arg_factory
 
     tp = c_arg[:decl_match.start()]
     tp = " ".join(tp.split())
