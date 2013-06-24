@@ -122,7 +122,7 @@ def _fill_dtype_registry(respect_windows, include_bool=True):
         # bool is of unspecified size in the OpenCL spec and may in fact be 4-byte.
         get_or_register_dtype("bool", np.bool)
 
-    get_or_register_dtype("char", np.int8)
+    get_or_register_dtype(["signed char", "char"], np.int8)
     get_or_register_dtype("unsigned char", np.uint8)
     get_or_register_dtype(["short", "signed short",
         "signed short int", "short signed int"], np.int16)
