@@ -161,16 +161,11 @@ def _fill_dtype_registry(respect_windows, include_bool=True):
 
 # {{{ dtype -> ctype
 
-def dtype_to_ctype(dtype, with_fp_tex_hack=False):
+def dtype_to_ctype(dtype):
     if dtype is None:
         raise ValueError("dtype may not be None")
 
     dtype = np.dtype(dtype)
-    if with_fp_tex_hack:
-        if dtype == np.float32:
-            return "fp_tex_float"
-        elif dtype == np.float64:
-            return "fp_tex_double"
 
     try:
         return DTYPE_TO_NAME[dtype]
