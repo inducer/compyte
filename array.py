@@ -22,10 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from pytools import memoize_method
 import numpy as np
-
-
 
 
 def f_contiguous_strides(itemsize, shape):
@@ -37,6 +34,7 @@ def f_contiguous_strides(itemsize, shape):
     else:
         return ()
 
+
 def c_contiguous_strides(itemsize, shape):
     if shape:
         strides = [itemsize]
@@ -47,8 +45,6 @@ def c_contiguous_strides(itemsize, shape):
         return ()
 
 
-
-
 class ArrayFlags:
     def __init__(self, ary):
         self.f_contiguous = (
@@ -56,11 +52,9 @@ class ArrayFlags:
                     ary.dtype.itemsize, ary.shape))
         self.c_contiguous = (
                 ary.strides == c_contiguous_strides(
-                ary.dtype.itemsize, ary.shape))
+                    ary.dtype.itemsize, ary.shape))
 
         self.forc = self.f_contiguous or self.c_contiguous
-
-
 
 
 def get_common_dtype(obj1, obj2, allow_double):
@@ -85,17 +79,17 @@ def get_common_dtype(obj1, obj2, allow_double):
     return result
 
 
-
 def bound(a):
     high = a.bytes
     low = a.bytes
 
     for stri, shp in zip(a.strides, a.shape):
-        if stri<0:
+        if stri < 0:
             low += (stri)*(shp-1)
         else:
             high += (stri)*(shp-1)
     return low, high
+
 
 def may_share_memory(a, b):
     # When this is called with a an ndarray and b
@@ -124,12 +118,14 @@ class _DummyArray(object):
         self.__array_interface__ = interface
         self.base = base
 
+
 def as_strided(x, shape=None, strides=None):
     """ Make an ndarray from the given array with the given shape and strides.
     """
     # work around Numpy bug 1873 (reported by Irwin Zaid)
     # Since this is stolen from numpy, this implementation has the same bug.
     # http://projects.scipy.org/numpy/ticket/1873
+    # == https://github.com/numpy/numpy/issues/2466
 
     if not x.dtype.isbuiltin:
         if (shape is None or x.shape == shape) and \
@@ -160,7 +156,7 @@ def as_strided(x, shape=None, strides=None):
 
         raise NotImplementedError(
                 "as_strided won't work on non-builtin arrays for now. "
-                "See http://projects.scipy.org/numpy/ticket/1873")
+                "See https://github.com/numpy/numpy/issues/2466")
 
     interface = dict(x.__array_interface__)
     if shape is not None:
