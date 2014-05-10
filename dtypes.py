@@ -117,6 +117,7 @@ def register_dtype(dtype, c_names, alias_ok=False):
 
 def _fill_dtype_registry(respect_windows, include_bool=True):
     from sys import platform
+    import struct
 
     if include_bool:
         # bool is of unspecified size in the OpenCL spec and may in fact be 4-byte.
@@ -131,7 +132,7 @@ def _fill_dtype_registry(respect_windows, include_bool=True):
     get_or_register_dtype(["int", "signed int"], np.int32)
     get_or_register_dtype(["unsigned", "unsigned int"], np.uint32)
 
-    is_64_bit = tuple.__itemsize__ * 8 == 64
+    is_64_bit = struct.calcsize('@P') * 8 == 64
     if is_64_bit:
         if 'win32' in platform and respect_windows:
             i64_name = "long long"
