@@ -28,11 +28,43 @@ OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import numpy as np
-
+import json as _json
 
 # {{{ registry
 
-DTYPE_TO_NAME = {}
+try:
+    hash(np.dtype([('s1', np.int8), ('s2', np.int8)]))
+    DTypeDict = dict
+except:
+    class DTypeDict:
+        def __init__(self):
+            self.__dict = {}
+            self.__type_dict = {}
+        @staticmethod
+        def __conv_type(key):
+            return _json.dumps(key.descr, separators=(',', ':'))
+        def __delitem__(self, key):
+            try:
+                del self.__dict[key]
+            except TypeError:
+                del self.__type_dict[self.__conv_type(key)]
+        def __setitem__(self, key, val):
+            try:
+                self.__dict[key] = val
+            except TypeError:
+                self.__type_dict[self.__conv_type(key)] = val
+        def __getitem__(self, key):
+            try:
+                return self.__dict[key]
+            except TypeError:
+                return self.__type_dict[self.__conv_type(key)]
+        def __contains__(self, key):
+            try:
+                return key in self.__dict
+            except TypeError:
+                return self.__conv_type(key) in self.__type_dict
+
+DTYPE_TO_NAME = DTypeDict()
 NAME_TO_DTYPE = {}
 
 
