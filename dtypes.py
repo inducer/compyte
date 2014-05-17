@@ -35,7 +35,9 @@ import json as _json
 try:
     hash(np.dtype([('s1', np.int8), ('s2', np.int8)]))
     DTypeDict = dict
+    dtype_hashable = True
 except:
+    dtype_hashable = False
     class DTypeDict:
         def __init__(self):
             self.__dict = {}
