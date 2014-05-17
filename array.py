@@ -131,11 +131,13 @@ except:
         # http://projects.scipy.org/numpy/ticket/1873
         # == https://github.com/numpy/numpy/issues/2466
 
+        # Do not recreate the array if nothing need to be changed.
+        # This fixes a lot of errors on pypy since DummyArray hack does not
+        # currently (2014/May/17) on pypy.
+        if ((shape is None or x.shape == shape) and
+            (strides is None or x.strides == strides)):
+            return x
         if not x.dtype.isbuiltin:
-            if (shape is None or x.shape == shape) and \
-              (strides is None or x.strides == strides):
-                return x
-
             if shape is None:
                 shape = x.shape
             strides = tuple(strides)
