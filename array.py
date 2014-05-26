@@ -108,61 +108,67 @@ def may_share_memory(a, b):
 
 # {{{ as_strided implementation
 
-# stolen from numpy to be compatible with older versions of numpy
+try:
+    from numpy.lib.stride_tricks import as_strided as _as_strided
+    _as_strided(np.zeros(10, dtype=np.dtype([("a", np.float64),
+                                             ("b", np.float64)], align=True)))
+    as_strided = _as_strided
+except:
+    # stolen from numpy to be compatible with older versions of numpy
+    class _DummyArray(object):
+        """ Dummy object that just exists to hang __array_interface__ dictionaries
+        and possibly keep alive a reference to a base array.
+        """
+        def __init__(self, interface, base=None):
+            self.__array_interface__ = interface
+            self.base = base
 
-class _DummyArray(object):
-    """ Dummy object that just exists to hang __array_interface__ dictionaries
-    and possibly keep alive a reference to a base array.
-    """
-    def __init__(self, interface, base=None):
-        self.__array_interface__ = interface
-        self.base = base
+    def as_strided(x, shape=None, strides=None):
+        """ Make an ndarray from the given array with the given shape and strides.
+        """
+        # work around Numpy bug 1873 (reported by Irwin Zaid)
+        # Since this is stolen from numpy, this implementation has the same bug.
+        # http://projects.scipy.org/numpy/ticket/1873
+        # == https://github.com/numpy/numpy/issues/2466
 
-
-def as_strided(x, shape=None, strides=None):
-    """ Make an ndarray from the given array with the given shape and strides.
-    """
-    # work around Numpy bug 1873 (reported by Irwin Zaid)
-    # Since this is stolen from numpy, this implementation has the same bug.
-    # http://projects.scipy.org/numpy/ticket/1873
-    # == https://github.com/numpy/numpy/issues/2466
-
-    if not x.dtype.isbuiltin:
-        if (shape is None or x.shape == shape) and \
-                (strides is None or x.strides == strides):
+        # Do not recreate the array if nothing need to be changed.
+        # This fixes a lot of errors on pypy since DummyArray hack does not
+        # currently (2014/May/17) on pypy.
+        if ((shape is None or x.shape == shape) and
+            (strides is None or x.strides == strides)):
             return x
+        if not x.dtype.isbuiltin:
+            if shape is None:
+                shape = x.shape
+            strides = tuple(strides)
 
-        if shape is None:
-            shape = x.shape
-        strides = tuple(strides)
+            from pytools import product
+            if strides is not None and shape is not None \
+                    and product(shape) == product(x.shape) \
+                    and x.flags.forc:
+                # Workaround: If we're being asked to do what amounts to a
+                # contiguous reshape, at least do that.
 
-        from pytools import product
-        if strides is not None and shape is not None \
-                and product(shape) == product(x.shape) \
-                and x.flags.forc:
-            # Workaround: If we're being asked to do what amounts to a
-            # contiguous reshape, at least do that.
+                if strides == f_contiguous_strides(x.dtype.itemsize, shape):
+                    # **dict is a workaround for Python 2.5 syntax.
+                    result = x.reshape(-1).reshape(*shape, **dict(order="F"))
+                    assert result.strides == strides
+                    return result
+                elif strides == c_contiguous_strides(x.dtype.itemsize, shape):
+                    # **dict is a workaround for Python 2.5 syntax.
+                    result = x.reshape(-1).reshape(*shape, **dict(order="C"))
+                    assert result.strides == strides
+                    return result
 
-            if strides == f_contiguous_strides(x.dtype.itemsize, shape):
-                # **dict is a workaround for Python 2.5 syntax.
-                result = x.reshape(-1).reshape(*shape, **dict(order="F"))
-                assert result.strides == strides
-                return result
-            elif strides == c_contiguous_strides(x.dtype.itemsize, shape):
-                # **dict is a workaround for Python 2.5 syntax.
-                result = x.reshape(-1).reshape(*shape, **dict(order="C"))
-                assert result.strides == strides
-                return result
+            raise NotImplementedError(
+                    "as_strided won't work on non-builtin arrays for now. "
+                    "See https://github.com/numpy/numpy/issues/2466")
 
-        raise NotImplementedError(
-                "as_strided won't work on non-builtin arrays for now. "
-                "See https://github.com/numpy/numpy/issues/2466")
-
-    interface = dict(x.__array_interface__)
-    if shape is not None:
-        interface['shape'] = tuple(shape)
-    if strides is not None:
-        interface['strides'] = tuple(strides)
-    return np.asarray(_DummyArray(interface, base=x))
+        interface = dict(x.__array_interface__)
+        if shape is not None:
+            interface['shape'] = tuple(shape)
+        if strides is not None:
+            interface['strides'] = tuple(strides)
+        return np.asarray(_DummyArray(interface, base=x))
 
 # }}}
