@@ -110,8 +110,12 @@ def may_share_memory(a, b):
 
 try:
     from numpy.lib.stride_tricks import as_strided as _as_strided
-    _as_strided(np.zeros(10, dtype=np.dtype([("a", np.float64),
-                                             ("b", np.float64)], align=True)))
+    _test_dtype = np.dtype(
+            [("a", np.float64), ("b", np.float64)], align=True)
+    _test_result = _as_strided(np.zeros(10, dtype=_test_dtype))
+    if _test_result.dtype != _test_dtype:
+        raise RuntimeError("numpy's as_strided is broken")
+
     as_strided = _as_strided
 except:
     # stolen from numpy to be compatible with older versions of numpy
@@ -134,6 +138,7 @@ except:
         # Do not recreate the array if nothing need to be changed.
         # This fixes a lot of errors on pypy since DummyArray hack does not
         # currently (2014/May/17) on pypy.
+
         if ((shape is None or x.shape == shape) and
             (strides is None or x.strides == strides)):
             return x
