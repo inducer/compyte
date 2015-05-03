@@ -29,148 +29,139 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 import numpy as np
 
-# {{{ registry
-
-DTYPE_TO_NAME = {}
-NAME_TO_DTYPE = {}
-
 
 class TypeNameNotKnown(RuntimeError):
     pass
 
 
-def get_or_register_dtype(c_names, dtype=None):
-    """Get or register a :class:`numpy.dtype` associated with the C type names
-    in the string list *c_names*. If *dtype* is `None`, no registration is
-    performed, and the :class:`numpy.dtype` must already have been registered.
-    If so, it is returned.  If not, :exc:`TypeNameNotKnown` is raised.
+# {{{ registry
 
-    If *dtype* is not `None`, registration is attempted. If the *c_names* are
-    already known and registered to identical :class:`numpy.dtype` objects,
-    then the previously dtype object of the previously  registered type is
-    returned. If the *c_names* are not yet known, the type is registered. If
-    one of the *c_names* is known but registered to a different type, an error
-    is raised. In this latter case, the type may end up partially registered
-    and any further behavior is undefined.
+class DTypeRegistry(object):
+    def __init__(self):
+        self.dtype_to_name = {}
+        self.name_to_dtype = {}
 
-    .. versionadded:: 2012.2
-    """
+    def get_or_register_dtype(self, c_names, dtype=None):
+        """Get or register a :class:`numpy.dtype` associated with the C type names
+        in the string list *c_names*. If *dtype* is `None`, no registration is
+        performed, and the :class:`numpy.dtype` must already have been registered.
+        If so, it is returned.  If not, :exc:`TypeNameNotKnown` is raised.
 
-    if isinstance(c_names, str):
-        c_names = [c_names]
+        If *dtype* is not `None`, registration is attempted. If the *c_names* are
+        already known and registered to identical :class:`numpy.dtype` objects,
+        then the previously dtype object of the previously  registered type is
+        returned. If the *c_names* are not yet known, the type is registered. If
+        one of the *c_names* is known but registered to a different type, an error
+        is raised. In this latter case, the type may end up partially registered
+        and any further behavior is undefined.
 
-    if dtype is None:
-        from pytools import single_valued
-        return single_valued(NAME_TO_DTYPE[name] for name in c_names)
+        .. versionadded:: 2012.2
+        """
 
-    dtype = np.dtype(dtype)
+        if isinstance(c_names, str):
+            c_names = [c_names]
 
-    # check if we've seen an identical dtype, if so retrieve exact dtype object.
-    try:
-        existing_name = DTYPE_TO_NAME[dtype]
-    except KeyError:
-        existed = False
-    else:
-        existed = True
-        existing_dtype = NAME_TO_DTYPE[existing_name]
-        assert existing_dtype == dtype
-        dtype = existing_dtype
+        if dtype is None:
+            from pytools import single_valued
+            return single_valued(self.name_to_dtype[name] for name in c_names)
 
-    for nm in c_names:
+        dtype = np.dtype(dtype)
+
+        # check if we've seen an identical dtype, if so retrieve exact dtype object.
         try:
-            name_dtype = NAME_TO_DTYPE[nm]
+            existing_name = self.dtype_to_name[dtype]
         except KeyError:
-            NAME_TO_DTYPE[nm] = dtype
+            existed = False
         else:
-            if name_dtype != dtype:
-                raise RuntimeError("name '%s' already registered to "
-                        "different dtype" % nm)
+            existed = True
+            existing_dtype = self.name_to_dtype[existing_name]
+            assert existing_dtype == dtype
+            dtype = existing_dtype
 
-    if not existed:
-        DTYPE_TO_NAME[dtype] = c_names[0]
-    if not str(dtype) in DTYPE_TO_NAME:
-        DTYPE_TO_NAME[str(dtype)] = c_names[0]
+        for nm in c_names:
+            try:
+                name_dtype = self.name_to_dtype[nm]
+            except KeyError:
+                self.name_to_dtype[nm] = dtype
+            else:
+                if name_dtype != dtype:
+                    raise RuntimeError("name '%s' already registered to "
+                            "different dtype" % nm)
 
-    return dtype
+        if not existed:
+            self.dtype_to_name[dtype] = c_names[0]
+        if not str(dtype) in self.dtype_to_name:
+            self.dtype_to_name[str(dtype)] = c_names[0]
 
+        return dtype
 
-def register_dtype(dtype, c_names, alias_ok=False):
-    from warnings import warn
-    warn("register_dtype is deprecated. Use get_or_register_dtype instead.",
-            DeprecationWarning, stacklevel=2)
+    def dtype_to_ctype(self, dtype):
+        if dtype is None:
+            raise ValueError("dtype may not be None")
 
-    if isinstance(c_names, str):
-        c_names = [c_names]
+        dtype = np.dtype(dtype)
 
-    dtype = np.dtype(dtype)
+        try:
+            return self.dtype_to_name[dtype]
+        except KeyError:
+            raise ValueError("unable to map dtype '%s'" % dtype)
 
-    # check if we've seen this dtype before and error out if a) it was seen before
-    # and b) alias_ok is False.
+    def fill_with_defaults(self, respect_windows, include_bool=True):
+        from sys import platform
+        import struct
 
-    if not alias_ok and dtype in DTYPE_TO_NAME:
-        raise RuntimeError("dtype '%s' already registered (as '%s', new names '%s')"
-                % (dtype, DTYPE_TO_NAME[dtype], ", ".join(c_names)))
+        if include_bool:
+            # bool is of unspecified size in the OpenCL spec and may in fact be
+            # 4-byte.
+            self.get_or_register_dtype("bool", np.bool)
 
-    get_or_register_dtype(c_names, dtype)
+        self.get_or_register_dtype(["signed char", "char"], np.int8)
+        self.get_or_register_dtype("unsigned char", np.uint8)
+        self.get_or_register_dtype(["short", "signed short",
+            "signed short int", "short signed int"], np.int16)
+        self.get_or_register_dtype(["unsigned short",
+            "unsigned short int", "short unsigned int"], np.uint16)
+        self.get_or_register_dtype(["int", "signed int"], np.int32)
+        self.get_or_register_dtype(["unsigned", "unsigned int"], np.uint32)
 
+        is_64_bit = struct.calcsize('@P') * 8 == 64
+        if is_64_bit:
+            if 'win32' in platform and respect_windows:
+                i64_name = "long long"
+            else:
+                i64_name = "long"
 
-def _fill_dtype_registry(respect_windows, include_bool=True):
-    from sys import platform
-    import struct
+            self.get_or_register_dtype(
+                    [i64_name, "%s int" % i64_name, "signed %s int" % i64_name,
+                        "%s signed int" % i64_name],
+                    np.int64)
+            self.get_or_register_dtype(
+                    ["unsigned %s" % i64_name, "unsigned %s int" % i64_name,
+                        "%s unsigned int" % i64_name],
+                    np.uint64)
 
-    if include_bool:
-        # bool is of unspecified size in the OpenCL spec and may in fact be 4-byte.
-        get_or_register_dtype("bool", np.bool)
-
-    get_or_register_dtype(["signed char", "char"], np.int8)
-    get_or_register_dtype("unsigned char", np.uint8)
-    get_or_register_dtype(["short", "signed short",
-        "signed short int", "short signed int"], np.int16)
-    get_or_register_dtype(["unsigned short",
-        "unsigned short int", "short unsigned int"], np.uint16)
-    get_or_register_dtype(["int", "signed int"], np.int32)
-    get_or_register_dtype(["unsigned", "unsigned int"], np.uint32)
-
-    is_64_bit = struct.calcsize('@P') * 8 == 64
-    if is_64_bit:
-        if 'win32' in platform and respect_windows:
-            i64_name = "long long"
+        # http://projects.scipy.org/numpy/ticket/2017
+        if is_64_bit:
+            self.get_or_register_dtype(["unsigned %s" % i64_name], np.uintp)
         else:
-            i64_name = "long"
+            self.get_or_register_dtype(["unsigned"], np.uintp)
 
-        get_or_register_dtype(
-                [i64_name, "%s int" % i64_name, "signed %s int" % i64_name,
-                    "%s signed int" % i64_name],
-                np.int64)
-        get_or_register_dtype(
-                ["unsigned %s" % i64_name, "unsigned %s int" % i64_name,
-                    "%s unsigned int" % i64_name],
-                np.uint64)
-
-    # http://projects.scipy.org/numpy/ticket/2017
-    if is_64_bit:
-        get_or_register_dtype(["unsigned %s" % i64_name], np.uintp)
-    else:
-        get_or_register_dtype(["unsigned"], np.uintp)
-
-    get_or_register_dtype("float", np.float32)
-    get_or_register_dtype("double", np.float64)
+        self.get_or_register_dtype("float", np.float32)
+        self.get_or_register_dtype("double", np.float64)
 
 # }}}
 
+# {{{ backward compatibility
 
-# {{{ dtype -> ctype
+TYPE_REGISTRY = DTypeRegistry()
 
-def dtype_to_ctype(dtype):
-    if dtype is None:
-        raise ValueError("dtype may not be None")
+# These are deprecated and should no longer be used
+DTYPE_TO_NAME = TYPE_REGISTRY.dtype_to_name
+NAME_TO_DTYPE = TYPE_REGISTRY.name_to_dtype
 
-    dtype = np.dtype(dtype)
-
-    try:
-        return DTYPE_TO_NAME[dtype]
-    except KeyError:
-        raise ValueError("unable to map dtype '%s'" % dtype)
+dtype_to_ctype = TYPE_REGISTRY.dtype_to_ctype
+get_or_register_dtype = TYPE_REGISTRY.get_or_register_dtype
+_fill_dtype_registry = TYPE_REGISTRY.fill_with_defaults
 
 # }}}
 
@@ -179,8 +170,11 @@ def dtype_to_ctype(dtype):
 
 def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
         name_to_dtype=None):
-    if name_to_dtype is None:
+    if isinstance(name_to_dtype, DTypeRegistry):
+        name_to_dtype = name_to_dtype.name_to_dtype__getitem__
+    elif name_to_dtype is None:
         name_to_dtype = NAME_TO_DTYPE.__getitem__
+
     c_arg = c_arg.replace("const", "").replace("volatile", "")
 
     # process and remove declarator
@@ -211,6 +205,24 @@ def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
 # }}}
 
 
+def register_dtype(dtype, c_names, alias_ok=False):
+    from warnings import warn
+    warn("register_dtype is deprecated. Use get_or_register_dtype instead.",
+            DeprecationWarning, stacklevel=2)
+
+    if isinstance(c_names, str):
+        c_names = [c_names]
+
+    dtype = np.dtype(dtype)
+
+    # check if we've seen this dtype before and error out if a) it was seen before
+    # and b) alias_ok is False.
+
+    if not alias_ok and dtype in TYPE_REGISTRY.dtype_to_name:
+        raise RuntimeError("dtype '%s' already registered (as '%s', new names '%s')"
+                % (dtype, TYPE_REGISTRY.dtype_to_name[dtype], ", ".join(c_names)))
+
+    TYPE_REGISTRY.get_or_register_dtype(c_names, dtype)
 
 
 # vim: foldmethod=marker
