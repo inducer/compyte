@@ -106,50 +106,56 @@ class DTypeRegistry(object):
         except KeyError:
             raise ValueError("unable to map dtype '%s'" % dtype)
 
-    def fill_with_defaults(self, respect_windows, include_bool=True):
-        from sys import platform
-        import struct
+# }}}
 
-        if include_bool:
-            # bool is of unspecified size in the OpenCL spec and may in fact be
-            # 4-byte.
-            self.get_or_register_dtype("bool", np.bool)
 
-        self.get_or_register_dtype(["signed char", "char"], np.int8)
-        self.get_or_register_dtype("unsigned char", np.uint8)
-        self.get_or_register_dtype(["short", "signed short",
-            "signed short int", "short signed int"], np.int16)
-        self.get_or_register_dtype(["unsigned short",
-            "unsigned short int", "short unsigned int"], np.uint16)
-        self.get_or_register_dtype(["int", "signed int"], np.int32)
-        self.get_or_register_dtype(["unsigned", "unsigned int"], np.uint32)
+# {{{ C types
 
-        is_64_bit = struct.calcsize('@P') * 8 == 64
-        if is_64_bit:
-            if 'win32' in platform and respect_windows:
-                i64_name = "long long"
-            else:
-                i64_name = "long"
+def fill_with_registry_with_c_types(reg, respect_windows, include_bool=True):
+    from sys import platform
+    import struct
 
-            self.get_or_register_dtype(
-                    [i64_name, "%s int" % i64_name, "signed %s int" % i64_name,
-                        "%s signed int" % i64_name],
-                    np.int64)
-            self.get_or_register_dtype(
-                    ["unsigned %s" % i64_name, "unsigned %s int" % i64_name,
-                        "%s unsigned int" % i64_name],
-                    np.uint64)
+    if include_bool:
+        # bool is of unspecified size in the OpenCL spec and may in fact be
+        # 4-byte.
+        reg.get_or_register_dtype("bool", np.bool)
 
-        # http://projects.scipy.org/numpy/ticket/2017
-        if is_64_bit:
-            self.get_or_register_dtype(["unsigned %s" % i64_name], np.uintp)
+    reg.get_or_register_dtype(["signed char", "char"], np.int8)
+    reg.get_or_register_dtype("unsigned char", np.uint8)
+    reg.get_or_register_dtype(["short", "signed short",
+        "signed short int", "short signed int"], np.int16)
+    reg.get_or_register_dtype(["unsigned short",
+        "unsigned short int", "short unsigned int"], np.uint16)
+    reg.get_or_register_dtype(["int", "signed int"], np.int32)
+    reg.get_or_register_dtype(["unsigned", "unsigned int"], np.uint32)
+
+    is_64_bit = struct.calcsize('@P') * 8 == 64
+    if is_64_bit:
+        if 'win32' in platform and respect_windows:
+            i64_name = "long long"
         else:
-            self.get_or_register_dtype(["unsigned"], np.uintp)
+            i64_name = "long"
 
-        self.get_or_register_dtype("float", np.float32)
-        self.get_or_register_dtype("double", np.float64)
+        reg.get_or_register_dtype(
+                [i64_name, "%s int" % i64_name, "signed %s int" % i64_name,
+                    "%s signed int" % i64_name],
+                np.int64)
+        reg.get_or_register_dtype(
+                ["unsigned %s" % i64_name, "unsigned %s int" % i64_name,
+                    "%s unsigned int" % i64_name],
+                np.uint64)
+
+    # http://projects.scipy.org/numpy/ticket/2017
+    if is_64_bit:
+        reg.get_or_register_dtype(["unsigned %s" % i64_name], np.uintp)
+    else:
+        reg.get_or_register_dtype(["unsigned"], np.uintp)
+
+    reg.get_or_register_dtype("float", np.float32)
+    reg.get_or_register_dtype("double", np.float64)
 
 # }}}
+
 
 # {{{ backward compatibility
 
@@ -161,7 +167,11 @@ NAME_TO_DTYPE = TYPE_REGISTRY.name_to_dtype
 
 dtype_to_ctype = TYPE_REGISTRY.dtype_to_ctype
 get_or_register_dtype = TYPE_REGISTRY.get_or_register_dtype
-_fill_dtype_registry = TYPE_REGISTRY.fill_with_defaults
+
+
+def _fill_dtype_registry(respect_windows, include_bool=True):
+    fill_with_registry_with_c_types(
+            TYPE_REGISTRY, respect_windows, include_bool)
 
 # }}}
 
