@@ -111,7 +111,7 @@ class DTypeRegistry(object):
 
 # {{{ C types
 
-def fill_with_registry_with_c_types(reg, respect_windows, include_bool=True):
+def fill_registry_with_c_types(reg, respect_windows, include_bool=True):
     from sys import platform
     import struct
 
@@ -154,6 +154,31 @@ def fill_with_registry_with_c_types(reg, respect_windows, include_bool=True):
     reg.get_or_register_dtype("float", np.float32)
     reg.get_or_register_dtype("double", np.float64)
 
+
+def fill_registry_with_opencl_c_types(reg):
+    reg.get_or_register_dtype(["char", "signed char"], np.int8)
+    reg.get_or_register_dtype(["uchar", "unsigned char"], np.uint8)
+    reg.get_or_register_dtype(["short", "signed short",
+        "signed short int", "short signed int"], np.int16)
+    reg.get_or_register_dtype(["ushort", "unsigned short",
+        "unsigned short int", "short unsigned int"], np.uint16)
+    reg.get_or_register_dtype(["int", "signed int"], np.int32)
+    reg.get_or_register_dtype(["uint", "unsigned", "unsigned int"], np.uint32)
+
+    reg.get_or_register_dtype(
+            ["long", "long int", "signed long int",
+                "long signed int"],
+            np.int64)
+    reg.get_or_register_dtype(
+            ["ulong", "unsigned long", "unsigned long int",
+                "long unsigned int"],
+            np.uint64)
+
+    reg.get_or_register_dtype(["intptr_t"], np.intp)
+    reg.get_or_register_dtype(["uintptr_t"], np.uintp)
+
+    reg.get_or_register_dtype("float", np.float32)
+    reg.get_or_register_dtype("double", np.float64)
 # }}}
 
 
@@ -170,7 +195,7 @@ get_or_register_dtype = TYPE_REGISTRY.get_or_register_dtype
 
 
 def _fill_dtype_registry(respect_windows, include_bool=True):
-    fill_with_registry_with_c_types(
+    fill_registry_with_c_types(
             TYPE_REGISTRY, respect_windows, include_bool)
 
 # }}}
