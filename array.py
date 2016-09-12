@@ -45,15 +45,31 @@ def c_contiguous_strides(itemsize, shape):
         return ()
 
 
+def equal_strides(strides1, strides2, shape):
+    if len(strides1) != len(strides2) or len(strides2) != len(shape):
+        return False
+
+    for s, st1, st2 in zip(shape, strides1, strides2):
+        if s != 1 and st1 != st2:
+            return False
+
+    return True
+
+
+def is_f_contiguous_strides(strides, itemsize, shape):
+    return equal_strides(strides, f_contiguous_strides(itemsize, shape), shape)
+
+
+def is_c_contiguous_strides(strides, itemsize, shape):
+    return equal_strides(strides, c_contiguous_strides(itemsize, shape), shape)
+
+
 class ArrayFlags:
     def __init__(self, ary):
-        self.f_contiguous = (
-                ary.strides == f_contiguous_strides(
-                    ary.dtype.itemsize, ary.shape))
-        self.c_contiguous = (
-                ary.strides == c_contiguous_strides(
-                    ary.dtype.itemsize, ary.shape))
-
+        self.f_contiguous = is_f_contiguous_strides(
+            ary.strides, ary.dtype.itemsize, ary.shape)
+        self.c_contiguous = is_c_contiguous_strides(
+            ary.strides, ary.dtype.itemsize, ary.shape)
         self.forc = self.f_contiguous or self.c_contiguous
 
 
