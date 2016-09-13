@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy
 import StringIO
+from six.moves import range
 
 
 _CL_MODE = False  # "pyopencl" in __name__
@@ -113,7 +116,7 @@ class GpuSum(object):
         if (x.type.ndim != len(self.reduce_mask)):
             raise TypeError("x must have rank %i" % len(self.reduce_mask))
         o_broadcast = [x.type.broadcastable[i]
-                       for i in xrange(x.type.ndim) if not self.reduce_mask[i]]
+                       for i in range(x.type.ndim) if not self.reduce_mask[i]]
         return Apply(self, [x], [CudaNdarrayType(o_broadcast)()])
 
     def perform(self, node, inp, out):
@@ -134,48 +137,48 @@ class GpuSum(object):
         fail = sub['fail']
 
         #check input
-        print >> sio, """
+        print("""
         if (%(x)s->nd != %(nd_in)s)
         {
             PyErr_Format(PyExc_TypeError,
                          "required nd=%(nd_in)s, got nd=%%i", %(x)s->nd);
             %(fail)s;
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
         #
         # alloc an output if we need one
         #
 
         # check the basics of out output
-        print >> sio, """
+        print("""
         if (  !%(z)s
            || (%(z)s->nd != %(nd_out)s)
-        """ % locals()
+        """ % locals(), file=sio)
 
         #ensure that the output has the right non-reduced dimensions
         j = 0
-        for i in xrange(nd_in):
+        for i in range(nd_in):
             if not self.reduce_mask[i]:
-                print >> sio, (" || (CudaNdarray_HOST_DIMS(%(z)s)[%(j)s] !="
+                print((" || (CudaNdarray_HOST_DIMS(%(z)s)[%(j)s] !="
                                "CudaNdarray_HOST_DIMS(%(x)s)[%(i)s]) " %
-                               locals())
+                               locals()), file=sio)
                 j += 1
 
-        print >> sio, """
+        print("""
            )
         {
-            """ % locals()
-        print >> sio, "int new_dims[%(nd_out)s]; " % locals()
+            """ % locals(), file=sio)
+        print("int new_dims[%(nd_out)s]; " % locals(), file=sio)
 
         j = 0
-        for i in xrange(nd_in):
+        for i in range(nd_in):
             if not self.reduce_mask[i]:
-                print >> sio, ('new_dims[%(j)s] = CudaNdarray_HOST_DIMS'
-                               '(%(x)s)[%(i)s];' % locals())
+                print(('new_dims[%(j)s] = CudaNdarray_HOST_DIMS'
+                               '(%(x)s)[%(i)s];' % locals()), file=sio)
                 j += 1
 
-        print >> sio, """
+        print("""
             Py_XDECREF(%(z)s);
             %(z)s = (CudaNdarray*) CudaNdarray_NewDims(%(nd_out)s, new_dims);
             if (NULL == %(z)s)
@@ -184,14 +187,14 @@ class GpuSum(object):
                 %(fail)s;
             }
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
         # \begin bracket the reduction in a check that there is
         # actually work to do
-        print >> sio, """
+        print("""
         if (CudaNdarray_SIZE(%(z)s))
         {
-        """ % locals()
+        """ % locals(), file=sio)
 
         #
         # Now perform the reduction
@@ -204,22 +207,22 @@ class GpuSum(object):
             #TODO: if only some dims are ccontiguous, call version
             #      with less dims.
 
-            print >> sio, 'if(CudaNdarray_is_c_contiguous(%(x)s)){' % locals()
+            print('if(CudaNdarray_is_c_contiguous(%(x)s)){' % locals(), file=sio)
             self.c_code_reduce_ccontig(sio, node, name, x, z, fail)
-            print >> sio, "}else{"
+            print("}else{", file=sio)
             getattr(self, 'c_code_reduce_%s' % (''.join(
                         str(i) for i in self.reduce_mask)))(sio, node, name,
                                                             x, z, fail)
-            print >> sio, "}"
+            print("}", file=sio)
         else:
             getattr(self, 'c_code_reduce_%s' % (''.join(
                         str(i) for i in self.reduce_mask)))(sio, node, name,
                                                             x, z, fail)
 
         # \end bracket the reduction ...
-        print >> sio, """
+        print("""
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
         return sio.getvalue()
 
@@ -255,7 +258,7 @@ class GpuSum(object):
             pattern = ''.join(str(c) for c in self.reduce_mask)
         ndim = len(self.reduce_mask)
         nd_out = ndim - sum(self.reduce_mask)
-        print >> sio, """
+        print("""
             if (verbose)
                 printf("running kernel_reduce_sum_%(pattern)s_%(name)s\\n");
             int n_shared = sizeof(%(dtype)s) * n_threads.x *
@@ -270,26 +273,26 @@ class GpuSum(object):
                                   n_blocks.x*n_blocks.y, n_shared);
             kernel_reduce_sum_%(pattern)s_%(name)s<<<n_blocks,
                                                      n_threads, n_shared>>>(
-            """ % locals()
-        for i in xrange(ndim):
-            print >> sio, """
+            """ % locals(), file=sio)
+        for i in range(ndim):
+            print("""
                     CudaNdarray_HOST_DIMS(%(x)s)[%(i)s],
-            """ % locals()
-        print >> sio, """
+            """ % locals(), file=sio)
+        print("""
                     CudaNdarray_DEV_DATA(%(x)s)
-            """ % locals()
-        for i in xrange(ndim):
-            print >> sio, """
+            """ % locals(), file=sio)
+        for i in range(ndim):
+            print("""
                     ,CudaNdarray_HOST_STRIDES(%(x)s)[%(i)s]
-            """ % locals()
-        print >> sio, """
+            """ % locals(), file=sio)
+        print("""
                     ,CudaNdarray_DEV_DATA(%(z)s)
-            """ % locals()
-        for i in xrange(nd_out):
-            print >> sio, """
+            """ % locals(), file=sio)
+        for i in range(nd_out):
+            print("""
                     ,CudaNdarray_HOST_STRIDES(%(z)s)[%(i)s]
-            """ % locals()
-        print >> sio, """
+            """ % locals(), file=sio)
+        print("""
                     );
             CNDA_THREAD_SYNC;
             cudaError_t sts = cudaGetLastError();
@@ -306,7 +309,7 @@ class GpuSum(object):
                     n_threads.z);
                 %(fail)s;
             }
-        """ % locals()
+        """ % locals(), file=sio)
         return sio.getvalue()
 
     def _k_decl(self, nodename,
@@ -336,24 +339,24 @@ class GpuSum(object):
             pattern = ''.join(str(i) for i in reduce_mask)
         sio = StringIO.StringIO()
 
-        print >> sio, """
+        print("""
             __global__ void kernel_reduce_sum_%(pattern)s_%(nodename)s(
-        """ % locals()
+        """ % locals(), file=sio)
 
-        for i in xrange(ndim):
-            print >> sio, """const int d%(i)s,""" % locals()
+        for i in range(ndim):
+            print("""const int d%(i)s,""" % locals(), file=sio)
 
-        print >> sio, """const %(dtype)s *A,""" % locals()
+        print("""const %(dtype)s *A,""" % locals(), file=sio)
 
-        for i in xrange(ndim):
-            print >> sio, """const int sA%(i)s,""" % locals()
+        for i in range(ndim):
+            print("""const int sA%(i)s,""" % locals(), file=sio)
 
-        print >> sio, """%(dtype)s * Z""" % locals()
+        print("""%(dtype)s * Z""" % locals(), file=sio)
 
-        for i in xrange(ndim - sum(reduce_mask)):
-            print >> sio, """, const int sZ%(i)s""" % locals()
+        for i in range(ndim - sum(reduce_mask)):
+            print(""", const int sZ%(i)s""" % locals(), file=sio)
 
-        print >> sio, ")"
+        print(")", file=sio)
 
         return sio.getvalue()
 
@@ -483,7 +486,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
         """ % locals()
 
     def c_code_reduce_ccontig(self, sio, node, name, x, z, fail):
-        print >> sio, """
+        print("""
         {
           if(CudaNdarray_SIZE(%(x)s)==0){
             cudaMemset(CudaNdarray_DEV_DATA(%(z)s),0,sizeof(%(dtype)s));
@@ -521,11 +524,11 @@ TODO: find why it don't work or put the GPU compute capability into the version
             }
          }
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_1(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -534,11 +537,11 @@ TODO: find why it don't work or put the GPU compute capability into the version
             dim3 n_blocks(1);
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_11(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -554,7 +557,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
             dim3 n_blocks(1);
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_01X(self, sio, node, name, x, z, fail, N):
         """
@@ -565,10 +568,10 @@ TODO: find why it don't work or put the GPU compute capability into the version
         makecall = self._makecall(node, name, x, z, fail)
         N_pattern = ''.join(['1'] * N)
         param_dim = ",".join(["CudaNdarray_HOST_DIMS(%(x)s)[%(i)s]" % locals()
-                              for i in xrange(N + 1)])
+                              for i in range(N + 1)])
         strides_dim = ",".join(
             ["CudaNdarray_HOST_STRIDES(%(x)s)[%(i)s]" % locals()
-                                for i in xrange(N + 1)])
+                                for i in range(N + 1)])
         threads_y = """
             //get as many y threads as we can fit
             while (n_threads.x * (n_threads.y+1) <=
@@ -596,7 +599,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
             threads_z = ''
         if len(self.reduce_mask) == 3:
             threads_z = ''
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -608,7 +611,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
                           NUM_VECTOR_OP_BLOCKS));
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_01(self, sio, node, name, x, z, fail):
         self.c_code_reduce_01X(sio, node, name, x, z, fail, 1)
@@ -620,7 +623,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
         self.c_code_reduce_01X(sio, node, name, x, z, fail, 3)
 
     def c_code_reduce_10(self, sio, node, name, x, z, fail):
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -666,14 +669,14 @@ TODO: find why it don't work or put the GPU compute capability into the version
                 %(fail)s;
             }
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_010(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
         makecall_inner = self._makecall(node, name, x, z,
                                         fail, pattern="010_inner")
         pattern = ''.join(str(i) for i in self.reduce_mask)
-        print >> sio, """
+        print("""
         {
 
  // if the alternative is less buggy, consider not using this branch
@@ -798,11 +801,11 @@ TODO: find why it don't work or put the GPU compute capability into the version
                 }
             }
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_0101(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -819,14 +822,14 @@ TODO: find why it don't work or put the GPU compute capability into the version
                           CudaNdarray_HOST_DIMS(%(x)s)[2]);
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_100(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
         # use threadIdx.x for i0
         # use blockIdx.x for i1
         # use blockIdx.y for i2
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -840,11 +843,11 @@ TODO: find why it don't work or put the GPU compute capability into the version
             }
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_110(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -861,11 +864,11 @@ TODO: find why it don't work or put the GPU compute capability into the version
             dim3 n_blocks(CudaNdarray_HOST_DIMS(%(x)s)[2]);
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_001(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -883,11 +886,11 @@ TODO: find why it don't work or put the GPU compute capability into the version
             n_blocks.y -= 1;
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_111(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -917,11 +920,11 @@ TODO: find why it don't work or put the GPU compute capability into the version
             dim3 n_blocks(1,1,1);
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_0011(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
 
@@ -948,11 +951,11 @@ TODO: find why it don't work or put the GPU compute capability into the version
 
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_1111(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -982,11 +985,11 @@ TODO: find why it don't work or put the GPU compute capability into the version
             dim3 n_blocks(1,1,1);
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_reduce_1011(self, sio, node, name, x, z, fail):
         makecall = self._makecall(node, name, x, z, fail)
-        print >> sio, """
+        print("""
         {
             int verbose = 0;
             dim3 n_threads(
@@ -1010,7 +1013,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
             dim3 n_blocks(CudaNdarray_HOST_DIMS(%(x)s)[1]);
             %(makecall)s
         }
-        """ % locals()
+        """ % locals(), file=sio)
 
     def c_code_cache_version(self):
         return (21,)
@@ -1023,7 +1026,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
             #this kernel is ok for up to a few thousand elements, but
             # it only runs on ONE multiprocessor
             reducebuf = self._k_reduce_buf('Z[0]')
-            print >> sio, """
+            print("""
             __global__ void kernel_reduce_sum_ccontig_%(nodename)s(
                     const int d0,
                     const %(dtype)s *A,
@@ -1045,13 +1048,13 @@ TODO: find why it don't work or put the GPU compute capability into the version
                 }
                 %(reducebuf)s
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (1,):
             #this kernel is ok for up to a few thousand elements, but
             # it only runs on ONE multiprocessor
             reducebuf = self._k_reduce_buf('Z[0]')
             decl = self._k_decl(nodename)
-            print >> sio, """
+            print("""
             %(decl)s
             {
                 const int threadCount = blockDim.x;
@@ -1071,17 +1074,17 @@ TODO: find why it don't work or put the GPU compute capability into the version
                 }
                 %(reducebuf)s
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (1, 1):
             #this kernel is ok for up to a few thousand elements, but
             # it only runs on ONE multiprocessor
             reducebuf = self._k_reduce_buf('Z[0]')
             decl = self._k_decl(nodename)
             init = self._k_init(nodename)
-            print >> sio, decl
-            print >> sio, " { "
-            print >> sio, init
-            print >> sio, """
+            print(decl, file=sio)
+            print(" { ", file=sio)
+            print(init, file=sio)
+            print("""
                 for (int i0 = threadIdx.y; i0 < d0; i0 += blockDim.y)
                 {
                     for (int i1 = threadIdx.x; i1 < d1; i1 += blockDim.x)
@@ -1090,9 +1093,9 @@ TODO: find why it don't work or put the GPU compute capability into the version
                         mysum += Ai;
                     }
                 }
-            """ % locals()
-            print >> sio, reducebuf
-            print >> sio, " } "
+            """ % locals(), file=sio)
+            print(reducebuf, file=sio)
+            print(" } ", file=sio)
 
         #01, 011, 0111
         if (0 == self.reduce_mask[0] and
@@ -1116,12 +1119,12 @@ TODO: find why it don't work or put the GPU compute capability into the version
 
             reducebuf = self._k_reduce_buf('Z[i0 * sZ0]')
             param_dim = ",".join(["const int d%(i)s" % locals()
-                                  for i in xrange(nd_in)])
+                                  for i in range(nd_in)])
             param_strides = ",".join(["const int sA%(i)s" % locals()
-                                      for i in xrange(nd_in)])
+                                      for i in range(nd_in)])
             decl = self._k_decl(nodename)
             init = self._k_init(nodename)
-            print >> sio, """
+            print("""
             %(decl)s{
                 %(init)s
                 for (int i0 = blockIdx.x; i0 < d0; i0 += gridDim.x){
@@ -1138,7 +1141,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
                   %(reducebuf)s
                 }
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (0, 1, 0) or self.reduce_mask == (1, 0):
             # this kernel uses one block for each column,
             # threads per block for each element per column.
@@ -1148,7 +1151,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
             #      case) then each warp is accessing non-contigous
             #      memory (a segment of a column).
             reducebuf = self._k_reduce_buf('Z[i0 * sZ0 + i2*sZ1]')
-            print >> sio, """
+            print("""
             __global__ void kernel_reduce_sum_010_%(nodename)s(
                     const int d0,
                     const int d1,
@@ -1181,9 +1184,9 @@ TODO: find why it don't work or put the GPU compute capability into the version
                 }
 
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (0, 1, 0):
-            print >> sio, """
+            print("""
             __global__ void kernel_reduce_sum_010_AD_%(nodename)s(
                     const int A,
                     const int B,
@@ -1221,7 +1224,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
                 }
 
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (0, 1, 0):
             #
             # This kernel is optimized when the inner most dimensions
@@ -1240,7 +1243,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
                                                     'blockDim.x')
             reducebuf = self._k_reduce_buf_multiple('Z[i0 * sZ0 + i2*sZ1]',
                                                     'blockDim.x')
-            print >> sio, """
+            print("""
             %(decl)s
             {
              if(warpSize<blockDim.x){
@@ -1264,7 +1267,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
                  }
               }
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (1, 1, 0):
             # this kernel uses one block for each column,
             # threads per block for each element per column.
@@ -1274,7 +1277,7 @@ TODO: find why it don't work or put the GPU compute capability into the version
             #      case) then each warp is accessing non-contigous
             #      memory (a segment of a column).
             reducebuf = self._k_reduce_buf('Z[blockIdx.x * sZ0]')
-            print >> sio, """
+            print("""
             __global__ void kernel_reduce_sum_110_%(nodename)s(
                     const int d0,
                     const int d1,
@@ -1307,12 +1310,12 @@ TODO: find why it don't work or put the GPU compute capability into the version
 
                 %(reducebuf)s
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (1, 0, 0):
             reducebuf = self._k_reduce_buf('Z[i1 * sZ0 + i2 * sZ1]')
             decl = self._k_decl(nodename)
             init = self._k_init(nodename)
-            print >> sio, """
+            print("""
             %(decl)s
             {
                 %(init)s
@@ -1329,12 +1332,12 @@ TODO: find why it don't work or put the GPU compute capability into the version
                     }
                 }
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (1, 1, 1):
             reducebuf = self._k_reduce_buf('Z[0]')
             decl = self._k_decl(nodename)
             init = self._k_init(nodename)
-            print >> sio, """
+            print("""
             %(decl)s
             {
                 %(init)s
@@ -1349,14 +1352,14 @@ TODO: find why it don't work or put the GPU compute capability into the version
                         }
                     }
                 }
-""" % locals()
-            print >> sio, reducebuf, "}"
+""" % locals(), file=sio)
+            print(reducebuf, "}", file=sio)
 
         if self.reduce_mask == (0, 0, 1):
             # this kernel uses one block for each row,
             # threads per block for each element per row.
             reducebuf = self._k_reduce_buf('Z[i0 * sZ0 + i1 * sZ1]')
-            print >> sio, """
+            print("""
             __global__ void kernel_reduce_sum_001_%(nodename)s(
                     const int d0,
                     const int d1,
@@ -1387,14 +1390,14 @@ TODO: find why it don't work or put the GPU compute capability into the version
                     }
                 }
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (0, 0, 1, 1):
             # this kernel uses one block for each row,
             # threads per block for each element per row.
             reducebuf = self._k_reduce_buf('Z[i0 * sZ0 + i1 * sZ1]')
             decl = self._k_decl(nodename)
             init = self._k_init(nodename)
-            print >> sio, """
+            print("""
             %(decl)s
             {
                 %(init)s
@@ -1416,14 +1419,14 @@ TODO: find why it don't work or put the GPU compute capability into the version
                     }
                 }
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (0, 1, 0, 1):
             # this kernel uses one block for each row,
             # threads per block for each element per row.
             reducebuf = self._k_reduce_buf('Z[i0 * sZ0 + i2 * sZ1]')
             decl = self._k_decl(nodename)
             init = self._k_init(nodename)
-            print >> sio, """
+            print("""
             %(decl)s
             {
                 %(init)s
@@ -1445,12 +1448,12 @@ TODO: find why it don't work or put the GPU compute capability into the version
                     }
                 }
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (1, 1, 1, 1):
             reducebuf = self._k_reduce_buf('Z[0]')
             decl = self._k_decl(nodename)
             init = self._k_init(nodename)
-            print >> sio, """
+            print("""
             %(decl)s
             {
                 %(init)s
@@ -1469,10 +1472,10 @@ TODO: find why it don't work or put the GPU compute capability into the version
                 }
                 %(reducebuf)s
             }
-            """ % locals()
+            """ % locals(), file=sio)
         if self.reduce_mask == (1, 0, 1, 1):
             reducebuf = self._k_reduce_buf('Z[blockIdx.x*sZ0]')
-            print >> sio, """
+            print("""
             __global__ void kernel_reduce_sum_1011_%(nodename)s(
                     const int d0,
                     const int d1,
@@ -1507,5 +1510,5 @@ TODO: find why it don't work or put the GPU compute capability into the version
                 }
                 %(reducebuf)s
             }
-            """ % locals()
+            """ % locals(), file=sio)
         return sio.getvalue()

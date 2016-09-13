@@ -17,3 +17,5 @@ distribute*tar.gz
 *.bbl
 *.blg
 *.log
+
+.cache

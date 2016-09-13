@@ -1,8 +1,11 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import copy
 
 import numpy
 
 import pygpu_ndarray as gpu_ndarray
+from six.moves import map
 
 enable_double = True
 enable_double = False
@@ -96,7 +99,7 @@ def gen_gpu_nd_array(shape_orig, dtype='float32', offseted_outer=False,
 def product(*args, **kwds):
     # product('ABCD', 'xy') --> Ax Ay Bx By Cx Cy Dx Dy
     # product(range(2), repeat=3) --> 000 001 010 011 100 101 110 111
-    pools = map(tuple, args) * kwds.get('repeat', 1)
+    pools = list(map(tuple, args)) * kwds.get('repeat', 1)
     result = [[]]
     for pool in pools:
         result = [x + [y] for x in result for y in pool]
@@ -311,7 +314,7 @@ def test_copy_view():
                 for order1 in ['c', 'f']:
                     # order2 is the order wanted after copy
                     for order2 in ['c', 'f']:
-                        print shp, dtype, offseted, order1, order2
+                        print(shp, dtype, offseted, order1, order2)
                         #TODO test copy unbroadcast!
                         a, b = gen_gpu_nd_array(shp, dtype, offseted,
                                                 order=order1)
@@ -374,8 +377,8 @@ def test_mapping_getitem_w_int():
         assert x.dtype == y.dtype
         assert x.strides == y.strides
         if not numpy.all(x == y):
-            print x
-            print y
+            print(x)
+            print(y)
         assert numpy.all(x == y), (x, y)
 
     def _cmpNs(x, y):
@@ -396,8 +399,8 @@ def test_mapping_getitem_w_int():
         assert x_.shape == y.shape
         assert x_.dtype == y.dtype
         if not numpy.all(x_ == y):
-            print x_
-            print y
+            print(x_)
+            print(y)
         assert numpy.all(x_ == y), (x_, y)
         pass
 
