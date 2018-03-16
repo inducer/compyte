@@ -210,7 +210,10 @@ def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
     elif name_to_dtype is None:
         name_to_dtype = NAME_TO_DTYPE.__getitem__
 
-    c_arg = c_arg.replace("const", "").replace("volatile", "").replace("__restrict__", "")
+    c_arg = (c_arg
+            .replace("const", "")
+            .replace("volatile", "")
+            .replace("__restrict__", ""))
 
     # process and remove declarator
     import re
