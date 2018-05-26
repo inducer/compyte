@@ -213,7 +213,8 @@ def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
     c_arg = (c_arg
             .replace("const", "")
             .replace("volatile", "")
-            .replace("__restrict__", ""))
+            .replace("__restrict__", "")
+            .replace("restrict", ""))
 
     # process and remove declarator
     import re
