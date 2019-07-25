@@ -153,6 +153,8 @@ def fill_registry_with_c_types(reg, respect_windows, include_bool=True):
 
     reg.get_or_register_dtype("float", np.float32)
     reg.get_or_register_dtype("double", np.float64)
+    reg.get_or_register_dtype("complex", np.complex64)
+    reg.get_or_register_dtype("double complex", np.complex128)
 
 
 def fill_registry_with_opencl_c_types(reg):
