@@ -192,12 +192,10 @@ def fill_registry_with_c_inttypes_types(reg):
     reg.get_or_register_dtype("uint16_t", np.uint16)
     reg.get_or_register_dtype("int32_t", np.int32)
     reg.get_or_register_dtype("uint32_t", np.uint32)
+    reg.get_or_register_dtype("int64_t", np.int64)
+    reg.get_or_register_dtype("uint64_t", np.uint64)
 
     is_64_bit = struct.calcsize('@P') * 8 == 64
-    if is_64_bit:
-        reg.get_or_register_dtype("int64_t", np.int64)
-        reg.get_or_register_dtype("uint64_t", np.uint64)
-
     if is_64_bit:
         reg.get_or_register_dtype("uint64_t", np.uintp)
     else:
