@@ -179,6 +179,31 @@ def fill_registry_with_opencl_c_types(reg):
 
     reg.get_or_register_dtype("float", np.float32)
     reg.get_or_register_dtype("double", np.float64)
+
+
+def fill_registry_with_c_inttypes_types(reg):
+    import struct
+
+    reg.get_or_register_dtype("bool", np.bool)
+
+    reg.get_or_register_dtype("int8_t", np.int8)
+    reg.get_or_register_dtype("uint8_t", np.uint8)
+    reg.get_or_register_dtype("int16_t", np.int16)
+    reg.get_or_register_dtype("uint16_t", np.uint16)
+    reg.get_or_register_dtype("int32_t", np.int32)
+    reg.get_or_register_dtype("uint32_t", np.uint32)
+    reg.get_or_register_dtype("int64_t", np.int64)
+    reg.get_or_register_dtype("uint64_t", np.uint64)
+
+    is_64_bit = struct.calcsize('@P') * 8 == 64
+    if is_64_bit:
+        reg.get_or_register_dtype("uint64_t", np.uintp)
+    else:
+        reg.get_or_register_dtype("uint32_t", np.uintp)
+
+    reg.get_or_register_dtype("float", np.float32)
+    reg.get_or_register_dtype("double", np.float64)
+
 # }}}
 
 
