@@ -181,7 +181,7 @@ def fill_registry_with_opencl_c_types(reg):
     reg.get_or_register_dtype("double", np.float64)
 
 
-def fill_registry_with_c_inttypes_types(reg):
+def fill_registry_with_c99_stdint_types(reg):
     import struct
 
     reg.get_or_register_dtype("bool", np.bool)
