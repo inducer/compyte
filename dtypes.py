@@ -182,8 +182,6 @@ def fill_registry_with_opencl_c_types(reg):
 
 
 def fill_registry_with_c99_stdint_types(reg):
-    import struct
-
     reg.get_or_register_dtype("bool", np.bool)
 
     reg.get_or_register_dtype("int8_t", np.int8)
@@ -194,12 +192,7 @@ def fill_registry_with_c99_stdint_types(reg):
     reg.get_or_register_dtype("uint32_t", np.uint32)
     reg.get_or_register_dtype("int64_t", np.int64)
     reg.get_or_register_dtype("uint64_t", np.uint64)
-
-    is_64_bit = struct.calcsize('@P') * 8 == 64
-    if is_64_bit:
-        reg.get_or_register_dtype("uint64_t", np.uintp)
-    else:
-        reg.get_or_register_dtype("uint32_t", np.uintp)
+    reg.get_or_register_dtype("uintptr_t", np.uintp)
 
     reg.get_or_register_dtype("float", np.float32)
     reg.get_or_register_dtype("double", np.float64)
