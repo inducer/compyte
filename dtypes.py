@@ -197,6 +197,12 @@ def fill_registry_with_c99_stdint_types(reg):
     reg.get_or_register_dtype("float", np.float32)
     reg.get_or_register_dtype("double", np.float64)
 
+
+def fill_registry_with_c99_complex_types(reg):
+    reg.get_or_register_dtype("float complex", np.complex64)
+    reg.get_or_register_dtype("double complex", np.complex128)
+    reg.get_or_register_dtype("long double complex", np.clongdouble)
+
 # }}}
 
 
