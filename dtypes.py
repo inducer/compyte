@@ -203,6 +203,47 @@ def fill_registry_with_c99_complex_types(reg):
     reg.get_or_register_dtype("double complex", np.complex128)
     reg.get_or_register_dtype("long double complex", np.clongdouble)
 
+def _create_vector_types():
+    names_and_dtypes = []
+
+    counts = [2, 3, 4, 8, 16]
+
+    for base_name, base_type in [
+            ('char', np.int8),
+            ('unsigned char', np.uint8),
+            ('short', np.int16),
+            ('unsigned short', np.uint16),
+            ('int', np.int32),
+            ('unsigned int', np.uint32),
+            ('long', np.int64),
+            ('unsigned long', np.uint64),
+            ('float', np.float32),
+            ('double', np.float64),
+            ]:
+        for count in counts:
+            base_dtype = np.dtype(base_type)
+            size = base_dtype.itemsize
+            byte_count = count*size
+            new_name = "v%d%s%d" % (count, base_dtype.kind, base_dtype.itemsize)
+            name = "%s __attribute__((vector_size(%d)))" % (new_name,
+                    byte_count)
+
+            names = ["%s" % (new_name) ]
+            titles = ["%s" %  (np.dtype(base_dtype).str)]
+
+            dtype = np.dtype(dict(
+                    names=names,
+                    formats=[base_type],
+                    titles=titles))
+
+            names_and_dtypes.append((dtype, name))
+    return names_and_dtypes
+
+
+def fill_registry_with_cvec_types(reg):
+    for dtype, name in _create_vector_types():
+        reg.get_or_register_dtype(name, dtype)
+
 # }}}
 
 
