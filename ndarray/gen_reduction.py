@@ -1,8 +1,5 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy
 import StringIO
-from six.moves import range
 
 
 _CL_MODE = False  # "pyopencl" in __name__
@@ -74,7 +71,7 @@ def debug(*msg):
 import pygpu_ndarray as gpu_ndarray
 
 
-class GpuSum(object):
+class GpuSum:
     """GpuSum is a Reduction along some dimensions by summation.
 
     The dimensions along which to sum is specified by the

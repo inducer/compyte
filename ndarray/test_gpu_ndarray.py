@@ -1,11 +1,8 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import copy
 
 import numpy
 
 import pygpu_ndarray as gpu_ndarray
-from six.moves import map
 
 enable_double = True
 enable_double = False

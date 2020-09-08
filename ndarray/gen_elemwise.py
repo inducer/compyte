@@ -6,14 +6,10 @@ that ndim is 0 as with all scalar type.
 """
 
 
-from __future__ import absolute_import
-from __future__ import print_function
 import numpy
 import StringIO
 
 import pygpu_ndarray as gpu_ndarray
-from six.moves import map
-from six.moves import range
 _CL_MODE = hasattr(gpu_ndarray, "set_opencl_context")
 
 
@@ -102,7 +98,7 @@ def get_str_list_logical_scalar(inputs, value_str='ii_i%i_value',
     return l
 
 
-class WrapOpenCLFunction(object):
+class WrapOpenCLFunction:
     def __init__(self, fct):
         self.fct = fct
 
@@ -141,7 +137,7 @@ def compile_gpu_code(code, fct_name):
     return fct
 
 
-class ElemwiseAlgo(object):
+class ElemwiseAlgo:
     verbose = 0  # 1, 2 or 3 for more verbose output.
     cache_version = ()
     cache_version = ('debug', 14, verbose)
@@ -179,7 +175,7 @@ class ElemwiseAlgo(object):
         for ipos, i in enumerate(outputs):
             print("//    Output ", ipos, str(i.type), file=sio)
         print(static, (
-            "KERNEL void kernel_%s_%s(unsigned int numEls" % (nodename, nd)), file=sio)
+            f"KERNEL void kernel_{nodename}_{nd}(unsigned int numEls"), file=sio)
         if (nd):
             print("\t,", ", ".join("const int dim%i" % i
                                            for i in range(nd)), file=sio)
@@ -877,8 +873,8 @@ def dummy_holder_for_code_not_used():
                 print("//    Input  ", ipos, str(i.type), file=sio)
             for ipos, i in enumerate(outputs):
                 print("//    Output ", ipos, str(i.type), file=sio)
-            print("""static __global__ void kernel_%s_%s(
-                             unsigned int numEls""" % (
+            print("""static __global__ void kernel_{}_{}(
+                             unsigned int numEls""".format(
                 nodename,
                 'tiling%i' % nd), file=sio)
             if (nd):
@@ -1332,7 +1328,7 @@ def reduction_collapses(inout, axis, verbose=0):
     nd_collapse_ = [1] * nd_orig
     # Can we collapse dims[i] and dims[i-1]?
     for i in range(nd_collapse - 1, 0, -1):
-        if ((local_str[i] * local_dims[i] != local_str[i - 1])):
+        if (local_str[i] * local_dims[i] != local_str[i - 1]):
             # The dims nd-1 are not strided again dimension nd
             nd_collapse_[i] = 0
         elif (i in local_axis) != ((i - 1) in local_axis):
