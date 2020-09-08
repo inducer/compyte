@@ -1,5 +1,3 @@
-from __future__ import division
-
 __copyright__ = "Copyright (C) 2011 Andreas Kloeckner"
 
 __license__ = """
@@ -135,7 +133,7 @@ try:
     as_strided = _as_strided
 except:
     # stolen from numpy to be compatible with older versions of numpy
-    class _DummyArray(object):
+    class _DummyArray:
         """ Dummy object that just exists to hang __array_interface__ dictionaries
         and possibly keep alive a reference to a base array.
         """
