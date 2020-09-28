@@ -129,9 +129,9 @@ def fill_registry_with_c_types(reg, respect_windows, include_bool=True):
     reg.get_or_register_dtype(["int", "signed int"], np.int32)
     reg.get_or_register_dtype(["unsigned", "unsigned int"], np.uint32)
 
-    is_64_bit = struct.calcsize('@P') * 8 == 64
+    is_64_bit = struct.calcsize("@P") * 8 == 64
     if is_64_bit:
-        if 'win32' in platform and respect_windows:
+        if "win32" in platform and respect_windows:
             i64_name = "long long"
         else:
             i64_name = "long"
