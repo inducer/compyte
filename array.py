@@ -136,7 +136,7 @@ try:
         raise RuntimeError("numpy's as_strided is broken")
 
     as_strided = _as_strided
-except:
+except Exception:
     # stolen from numpy to be compatible with older versions of numpy
     class _DummyArray:
         """ Dummy object that just exists to hang __array_interface__ dictionaries
@@ -158,8 +158,8 @@ except:
         # This fixes a lot of errors on pypy since DummyArray hack does not
         # currently (2014/May/17) on pypy.
 
-        if ((shape is None or x.shape == shape) and
-            (strides is None or x.strides == strides)):
+        if ((shape is None or x.shape == shape)
+                and (strides is None or x.strides == strides)):  # noqa: W503
             return x
         if not x.dtype.isbuiltin:
             if shape is None:
@@ -190,9 +190,9 @@ except:
 
         interface = dict(x.__array_interface__)
         if shape is not None:
-            interface['shape'] = tuple(shape)
+            interface["shape"] = tuple(shape)
         if strides is not None:
-            interface['strides'] = tuple(strides)
+            interface["strides"] = tuple(strides)
         return np.asarray(_DummyArray(interface, base=x))
 
 # }}}
