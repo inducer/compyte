@@ -55,11 +55,16 @@ def equal_strides(strides1, strides2, shape):
 
 
 def is_f_contiguous_strides(strides, itemsize, shape):
-    return equal_strides(strides, f_contiguous_strides(itemsize, shape), shape)
+    from pytools import product
+    return (
+            equal_strides(strides, f_contiguous_strides(itemsize, shape), shape)
+            or product(shape) == 0)  # noqa: W503
 
 
 def is_c_contiguous_strides(strides, itemsize, shape):
-    return equal_strides(strides, c_contiguous_strides(itemsize, shape), shape)
+    from pytools import product
+    return (equal_strides(strides, c_contiguous_strides(itemsize, shape), shape)
+            or product(shape) == 0)  # noqa: W503
 
 
 class ArrayFlags:
