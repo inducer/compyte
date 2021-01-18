@@ -44,6 +44,9 @@ def c_contiguous_strides(itemsize, shape):
 
 
 def equal_strides(strides1, strides2, shape):
+    if strides1 == strides2:
+        return True
+
     if len(strides1) != len(strides2) or len(strides2) != len(shape):
         return False
 
