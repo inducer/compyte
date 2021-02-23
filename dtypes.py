@@ -117,7 +117,7 @@ def fill_registry_with_c_types(reg, respect_windows, include_bool=True):
     if include_bool:
         # bool is of unspecified size in the OpenCL spec and may in fact be
         # 4-byte.
-        reg.get_or_register_dtype("bool", np.bool)
+        reg.get_or_register_dtype("bool", np.bool8)
 
     reg.get_or_register_dtype(["signed char", "char"], np.int8)
     reg.get_or_register_dtype("unsigned char", np.uint8)
@@ -181,7 +181,7 @@ def fill_registry_with_opencl_c_types(reg):
 
 
 def fill_registry_with_c99_stdint_types(reg):
-    reg.get_or_register_dtype("bool", np.bool)
+    reg.get_or_register_dtype("bool", np.bool8)
 
     reg.get_or_register_dtype("int8_t", np.int8)
     reg.get_or_register_dtype("uint8_t", np.uint8)
