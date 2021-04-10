@@ -78,6 +78,15 @@ class ArrayFlags:
             ary.strides, ary.dtype.itemsize, ary.shape)
         self.forc = self.f_contiguous or self.c_contiguous
 
+    def __repr__(self):
+        return (
+                f"  C_CONTIGUOUS : {self.c_contiguous}\n"
+                f"  F_CONTIGUOUS : {self.f_contiguous}"
+                )
+
+    def __str__(self):
+        return repr(self)
+
 
 def get_common_dtype(obj1, obj2, allow_double):
     # Yes, numpy behaves differently depending on whether
