@@ -27,7 +27,10 @@ def f_contiguous_strides(itemsize, shape):
     if shape:
         strides = [itemsize]
         for s in shape[:-1]:
-            strides.append(strides[-1]*s)
+            # NOTE: max(1, s) is used to handle 0-sized axes in `shape`;
+            # the stride for `shape[i] <= 1` doesn't matter, but letting it be 0
+            # is not a good idea: https://github.com/inducer/arraycontext/pull/91
+            strides.append(strides[-1]*max(1, s))
         return tuple(strides)
     else:
         return ()
@@ -37,7 +40,10 @@ def c_contiguous_strides(itemsize, shape):
     if shape:
         strides = [itemsize]
         for s in shape[:0:-1]:
-            strides.append(strides[-1]*s)
+            # NOTE: max(1, s) is used to handle 0-sized axes in `shape`;
+            # the stride for `shape[i] <= 1` doesn't matter, but letting it be 0
+            # is not a good idea: https://github.com/inducer/arraycontext/pull/91
+            strides.append(strides[-1]*max(1, s))
         return tuple(strides[::-1])
     else:
         return ()
