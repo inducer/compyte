@@ -20,7 +20,6 @@ jobs:
                 python-version: '3.6'
         -   name: "Main Script"
             run: |
-                cd ..
                 curl -L -O -k https://tiker.net/ci-support-v0
                 . ./ci-support-v0
                 print_status_message
