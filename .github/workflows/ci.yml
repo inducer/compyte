@@ -21,5 +21,10 @@ jobs:
         -   name: "Main Script"
             run: |
                 cd ..
-                curl -L -O -k https://gitlab.tiker.net/inducer/ci-support/raw/main/prepare-and-run-flake8.sh
-                . ./prepare-and-run-flake8.sh compyte/*.py
+                curl -L -O -k https://tiker.net/ci-support-v0
+                . ./ci-support-v0
+                print_status_message
+                clean_up_repo_and_working_env
+                create_and_set_up_virtualenv
+                cd ..
+                install_and_run_flake8 compyte/*.py
