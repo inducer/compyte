@@ -26,4 +26,5 @@ jobs:
                 clean_up_repo_and_working_env
                 create_and_set_up_virtualenv
                 cd ..
+                cp compyte/setup.cfg .
                 install_and_run_flake8 compyte/*.py
