@@ -98,14 +98,17 @@ def get_common_dtype(obj1, obj2, allow_double):
     # Yes, numpy behaves differently depending on whether
     # we're dealing with arrays or scalars.
 
-    zero1 = np.zeros(1, dtype=obj1.dtype)
+    try:
+        t1 = obj1.dtype
+    except AttributeError:
+        t1 = type(obj1)
 
     try:
-        zero2 = np.zeros(1, dtype=obj2.dtype)
+        t2 = obj2.dtype
     except AttributeError:
-        zero2 = obj2
+        t2 = type(obj2)
 
-    result = (zero1 + zero2).dtype
+    result = np.find_common_type([t1, t2], [])
 
     if not allow_double:
         if result == np.float64:
