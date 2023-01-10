@@ -192,13 +192,11 @@ except Exception:
                 # contiguous reshape, at least do that.
 
                 if strides == f_contiguous_strides(x.dtype.itemsize, shape):
-                    # **dict is a workaround for Python 2.5 syntax.
-                    result = x.reshape(-1).reshape(*shape, **dict(order="F"))
+                    result = x.reshape(-1).reshape(*shape, order="F")
                     assert result.strides == strides
                     return result
                 elif strides == c_contiguous_strides(x.dtype.itemsize, shape):
-                    # **dict is a workaround for Python 2.5 syntax.
-                    result = x.reshape(-1).reshape(*shape, **dict(order="C"))
+                    result = x.reshape(-1).reshape(*shape, order="C")
                     assert result.strides == strides
                     return result
 
