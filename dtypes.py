@@ -162,7 +162,7 @@ def fill_registry_with_opencl_c_types(reg):
     reg.get_or_register_dtype(["ushort", "unsigned short",
         "unsigned short int", "short unsigned int"], np.uint16)
     reg.get_or_register_dtype(["int", "signed int"], np.int32)
-    reg.get_or_register_dtype(["uint", "unsigned", "unsigned int"], np.uint32)
+    reg.get_or_register_dtype(["unsigned", "unsigned int"], np.uint32)
 
     reg.get_or_register_dtype(
             ["long", "long int", "signed long int",
