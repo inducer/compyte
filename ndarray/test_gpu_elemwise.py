@@ -1,12 +1,13 @@
 # TODO: test other dtype
+from functools import reduce
+
 import numpy
+import pygpu_ndarray as gpu_ndarray
 import theano
 
-import pygpu_ndarray as gpu_ndarray
 from .gen_elemwise import MyGpuNdArray, elemwise_collapses
-from .test_gpu_ndarray import (dtypes_all, enable_double,
-                              gen_gpu_nd_array, product)
-from functools import reduce
+from .test_gpu_ndarray import (dtypes_all, enable_double, gen_gpu_nd_array,
+                               product)
 
 
 def rand(shape, dtype):

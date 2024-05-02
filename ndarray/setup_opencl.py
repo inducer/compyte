@@ -1,8 +1,8 @@
 import os
-
-from distutils.core import setup, Extension
 from distutils.command.build_ext import build_ext
+from distutils.core import Extension, setup
 from distutils.dep_util import newer
+
 import numpy as np
 
 
@@ -82,6 +82,7 @@ class build_ext_nvcc(build_ext):
             self.build_extension(ext)
 
 import sys
+
 if sys.platform == 'darwin':
     libcl_args = {'extra_link_args': ['-framework', 'OpenCL']}
 else:

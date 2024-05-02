@@ -1,7 +1,6 @@
 import copy
 
 import numpy
-
 import pygpu_ndarray as gpu_ndarray
 
 enable_double = True

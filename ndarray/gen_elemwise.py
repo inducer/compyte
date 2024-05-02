@@ -7,9 +7,9 @@ that ndim is 0 as with all scalar type.
 
 
 import numpy
+import pygpu_ndarray as gpu_ndarray
 import StringIO
 
-import pygpu_ndarray as gpu_ndarray
 _CL_MODE = hasattr(gpu_ndarray, "set_opencl_context")
 
 
@@ -20,6 +20,7 @@ if _CL_MODE:
     from pyopencl.tools import dtype_to_ctype
 #    import pyopencl._mymako as mako
     from pyopencl._cluda import CLUDA_PREAMBLE
+
     # TODO: use mako to get rid of the %if
     CLUDA_PREAMBLE = CLUDA_PREAMBLE[:455]
     CLUDA_PREAMBLE += """
@@ -51,12 +52,12 @@ else:
 #define GDIM_2 gridDim.z
  """
 
-from theano import Apply
-from theano import scalar
-from theano.tensor import TensorType
-import theano
-
 import logging
+
+import theano
+from theano import Apply, scalar
+from theano.tensor import TensorType
+
 _logger_name = 'compyte.gen_elemwise'
 _logger = logging.getLogger(_logger_name)
 _logger.setLevel(logging.INFO)
