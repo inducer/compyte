@@ -111,8 +111,8 @@ class DTypeRegistry:
 # {{{ C types
 
 def fill_registry_with_c_types(reg, respect_windows, include_bool=True):
-    from sys import platform
     import struct
+    from sys import platform
 
     if include_bool:
         # bool is of unspecified size in the OpenCL spec and may in fact be
