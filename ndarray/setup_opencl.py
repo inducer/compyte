@@ -83,6 +83,7 @@ class build_ext_nvcc(build_ext):
 
 import sys
 
+
 if sys.platform == 'darwin':
     libcl_args = {'extra_link_args': ['-framework', 'OpenCL']}
 else:

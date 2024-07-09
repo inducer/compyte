@@ -8,7 +8,7 @@ extend-select = [
     "E",   # pycodestyle
     "F",   # pyflakes
 
-    # "I",   # flake8-isort
+    "I",   # flake8-isort
 
     "N",   # pep8-naming
     "NPY", # numpy

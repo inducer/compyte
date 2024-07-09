@@ -6,8 +6,7 @@ import pygpu_ndarray as gpu_ndarray
 import theano
 
 from .gen_elemwise import MyGpuNdArray, elemwise_collapses
-from .test_gpu_ndarray import (dtypes_all, enable_double, gen_gpu_nd_array,
-                               product)
+from .test_gpu_ndarray import dtypes_all, enable_double, gen_gpu_nd_array, product
 
 
 def rand(shape, dtype):

@@ -1,6 +1,7 @@
 import numpy
 import StringIO
 
+
 _CL_MODE = False  # "pyopencl" in __name__
 
 
@@ -8,9 +9,10 @@ if _CL_MODE:
     # THIS IS NOT FINISHED
     import pyopencl as cl
     import pyopencl.array as cl_array
-    from pyopencl.tools import dtype_to_ctype
-#    import pyopencl._mymako as mako
+
+    #    import pyopencl._mymako as mako
     from pyopencl._cluda import CLUDA_PREAMBLE
+    from pyopencl.tools import dtype_to_ctype
 
     # TODO: use mako to get rid of the %if
     CLUDA_PREAMBLE = CLUDA_PREAMBLE[:455]
@@ -29,10 +31,11 @@ if _CL_MODE:
 else:
     import pycuda.autoinit
     import pycuda.driver as driver
+
+    #    import pycuda._mymako as mako
+    from pycuda._cluda import CLUDA_PREAMBLE
     from pycuda.compiler import SourceModule
     from pycuda.tools import dtype_to_ctype
-#    import pycuda._mymako as mako
-    from pycuda._cluda import CLUDA_PREAMBLE
     CLUDA_PREAMBLE += """
 #define LDIM_0 blockDim.x
 #define LDIM_1 blockDim.y
@@ -49,6 +52,7 @@ import theano
 from theano import Apply, scalar
 from theano.sandbox.cuda import CudaNdarrayType
 from theano.tensor import TensorType
+
 
 _logger_name = 'compyte.gen_reduction'
 _logger = logging.getLogger(_logger_name)
