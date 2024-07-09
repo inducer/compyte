@@ -29,7 +29,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 import numpy as np
 
 
-class TypeNameNotKnown(RuntimeError):
+class TypeNameNotKnown(RuntimeError):  # noqa: N818
     pass
 
 
@@ -89,7 +89,7 @@ class DTypeRegistry:
 
         if not existed:
             self.dtype_to_name[dtype] = c_names[0]
-        if not str(dtype) in self.dtype_to_name:
+        if str(dtype) not in self.dtype_to_name:
             self.dtype_to_name[str(dtype)] = c_names[0]
 
         return dtype
@@ -103,7 +103,7 @@ class DTypeRegistry:
         try:
             return self.dtype_to_name[dtype]
         except KeyError:
-            raise ValueError("unable to map dtype '%s'" % dtype)
+            raise ValueError("unable to map dtype '%s'" % dtype) from None
 
 # }}}
 
@@ -260,7 +260,7 @@ def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
     try:
         dtype = name_to_dtype(tp)
     except KeyError:
-        raise ValueError("unknown type '%s'" % tp)
+        raise ValueError("unknown type '%s'" % tp) from None
 
     return arg_class(dtype, name)
 
