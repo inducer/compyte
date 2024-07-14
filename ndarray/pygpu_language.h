@@ -35,6 +35,10 @@ struct table_struct{
 table_struct _alloc_size_table[TABLE_SIZE];
 #endif
 
+#if NPY_ABI_VERSION < 0x02000000
+  #define PyDataType_ELSIZE(descr) ((descr)->elsize)
+#endif
+
 /**
  * Allocation and freeing of device memory should go through these functions so that the lib can track memory usage.
  *
@@ -80,7 +84,7 @@ int PyGpuNdArray_alloc_contiguous(PyGpuNdArrayObject *self, const int nd, const 
     //TODO: check if by any chance our current dims are correct,
     //      and strides already contiguous
     //      in that case we can return right here.
-    DPRINTF("PyGpuNdArray_alloc_contiguous: before itemsize descr=%p elsize=%i\n", self->descr, self->descr->elsize);
+    DPRINTF("PyGpuNdArray_alloc_contiguous: before itemsize descr=%p elsize=%i\n", self->descr, PyDataType_ELSIZE(self->descr));
     int elsize = PyGpuNdArray_ITEMSIZE((PyObject*)self);
     DPRINTF("PyGpuNdArray_alloc_contiguous: set_nd %d! elsize=%i\n", nd, elsize);
     if(order != NPY_FORTRANORDER){

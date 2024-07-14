@@ -189,7 +189,7 @@ static PyObject * PyGpuNdArray_copy(PyObject * self, PyObject *args,
 {
     DPRINTF("PyGpuNdArray_copy start\n");
     static const char *kwlist[] = {"order", NULL};
-    NPY_ORDER order = PyArray_CORDER;
+    NPY_ORDER order = NPY_CORDER;
 
     if(!PyGpuNdArray_Check(self)){
         PyErr_SetString(PyExc_ValueError, "PyGpuNdArray_copy: expected a PyGpuNdArrayObject.");
@@ -428,8 +428,8 @@ PyGpuNdArray_Zeros(int nd, npy_intp* dims, PyArray_Descr* dtype, int fortran)
       total_elements*=dims[i];
 
     // total_elements now contains the size of the array, in reals
-    int total_size = total_elements * dtype->elsize;
-    
+    int total_size = total_elements * PyDataType_ELSIZE(dtype);
+
     // Fill with zeros
     int err = PyGpuMemset(PyGpuNdArray_DATA(rval), 0, total_size);
     if (err) {
@@ -449,7 +449,7 @@ PyGpuNdArray_zeros(PyObject* dummy, PyObject* args, PyObject *kargs)
     static const char *kwlist[] = {"shape","dtype","order",NULL}; /* XXX ? */
     PyArray_Descr *typecode = NULL;
     PyObject * shape = NULL;
-    NPY_ORDER order = PyArray_CORDER;
+    NPY_ORDER order = NPY_CORDER;
     bool fortran = false;
     PyObject *ret = NULL;
 
@@ -464,7 +464,7 @@ PyGpuNdArray_zeros(PyObject* dummy, PyObject* args, PyObject *kargs)
         Py_XDECREF(shape);
         return ret;
     }
-    if (order == PyArray_FORTRANORDER) {
+    if (order == NPY_FORTRANORDER) {
         fortran = true;
     }
     else {
@@ -529,7 +529,7 @@ PyGpuNdArray_empty(PyObject* dummy, PyObject* args, PyObject *kargs)
     static const char *kwlist[] = {"shape","dtype","order",NULL}; /* XXX ? */
     PyArray_Descr *typecode = NULL;
     PyObject * shape = NULL;
-    NPY_ORDER order = PyArray_CORDER;
+    NPY_ORDER order = NPY_CORDER;
     bool fortran = false;
     PyObject *ret = NULL;
 
@@ -544,7 +544,7 @@ PyGpuNdArray_empty(PyObject* dummy, PyObject* args, PyObject *kargs)
         Py_XDECREF(shape);
         return ret;
     }
-    if (order == PyArray_FORTRANORDER) {
+    if (order == NPY_FORTRANORDER) {
         fortran = true;
     }
     else {

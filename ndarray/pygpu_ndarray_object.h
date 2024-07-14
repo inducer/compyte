@@ -31,7 +31,7 @@ typedef struct PyGpuNdArrayObject{
 #define PyGpuNdArray_BASE(obj) (((PyGpuNdArrayObject *)obj)->base)
 #define PyGpuNdArray_DESCR(obj) (((PyGpuNdArrayObject *)obj)->descr)
 #define PyGpuNdArray_FLAGS(obj) (((PyGpuNdArrayObject *)obj)->gpu_ndarray.flags)
-#define PyGpuNdArray_ITEMSIZE(obj) (((PyGpuNdArrayObject *)obj)->descr->elsize)
+#define PyGpuNdArray_ITEMSIZE(obj) (PyDataType_ELSIZE(((PyGpuNdArrayObject *)obj)->descr))
 #define PyGpuNdArray_TYPE(obj) (((PyGpuNdArrayObject *)(obj))->descr->type_num)
 
 #define PyGpuNdArray_SIZE(obj) PyArray_MultiplyList(PyGpuNdArray_DIMS(obj),PyGpuNdArray_NDIM(obj))
