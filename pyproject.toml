@@ -21,9 +21,6 @@ extend-ignore = [
     "E226", # missing whitespace around operator
 ]
 
-[tool.ruff.lint.per-file-ignores]
-"ndarray/**/*.py" = ["Q", "B", "E", "F", "N", "C4"]
-
 [tool.ruff.lint.flake8-quotes]
 docstring-quotes = "double"
 inline-quotes = "double"
@@ -33,9 +30,5 @@ multiline-quotes = "double"
 combine-as-imports = true
 known-first-party = [
     "pytools",
-    "pymbolic",
-]
-known-local-folder = [
-    "modepy",
 ]
 lines-after-imports = 2
