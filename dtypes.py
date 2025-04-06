@@ -84,8 +84,8 @@ class DTypeRegistry:
                 self.name_to_dtype[nm] = dtype
             else:
                 if name_dtype != dtype:
-                    raise RuntimeError("name '%s' already registered to "
-                            "different dtype" % nm)
+                    raise RuntimeError(
+                        f"name '{nm}' already registered to different dtype")
 
         if not existed:
             self.dtype_to_name[dtype] = c_names[0]
@@ -103,7 +103,7 @@ class DTypeRegistry:
         try:
             return self.dtype_to_name[dtype]
         except KeyError:
-            raise ValueError("unable to map dtype '%s'" % dtype) from None
+            raise ValueError(f"unable to map dtype '{dtype}'") from None
 
 # }}}
 
@@ -135,18 +135,21 @@ def fill_registry_with_c_types(reg, respect_windows, include_bool=True):
         else:
             i64_name = "long"
 
-        reg.get_or_register_dtype(
-                [i64_name, "%s int" % i64_name, "signed %s int" % i64_name,
-                    "%s signed int" % i64_name],
+        reg.get_or_register_dtype([
+                i64_name,
+                f"{i64_name} int",
+                f"signed {i64_name} int",
+                f"{i64_name} signed int"],
                 np.int64)
-        reg.get_or_register_dtype(
-                ["unsigned %s" % i64_name, "unsigned %s int" % i64_name,
-                    "%s unsigned int" % i64_name],
+        reg.get_or_register_dtype([
+                f"unsigned {i64_name}",
+                f"unsigned {i64_name} int",
+                f"{i64_name} unsigned int"],
                 np.uint64)
 
-    # http://projects.scipy.org/numpy/ticket/2017
+    # https://github.com/numpy/numpy/issues/2610
     if is_64_bit:
-        reg.get_or_register_dtype(["unsigned %s" % i64_name], np.uintp)
+        reg.get_or_register_dtype([f"unsigned {i64_name}"], np.uintp)
     else:
         reg.get_or_register_dtype(["unsigned"], np.uintp)
 
@@ -245,7 +248,7 @@ def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
     decl_match = decl_re.search(c_arg)
 
     if decl_match is None:
-        raise ValueError("couldn't parse C declarator '%s'" % c_arg)
+        raise ValueError(f"couldn't parse C declarator '{c_arg}'")
 
     name = decl_match.group(2)
 
@@ -260,7 +263,7 @@ def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
     try:
         dtype = name_to_dtype(tp)
     except KeyError:
-        raise ValueError("unknown type '%s'" % tp) from None
+        raise ValueError(f"unknown type '{tp}'") from None
 
     return arg_class(dtype, name)
 
@@ -280,9 +283,12 @@ def register_dtype(dtype, c_names, alias_ok=False):
     # check if we've seen this dtype before and error out if a) it was seen before
     # and b) alias_ok is False.
 
-    if not alias_ok and dtype in TYPE_REGISTRY.dtype_to_name:
-        raise RuntimeError("dtype '%s' already registered (as '%s', new names '%s')"
-                % (dtype, TYPE_REGISTRY.dtype_to_name[dtype], ", ".join(c_names)))
+    name = TYPE_REGISTRY.dtype_to_name.get(dtype)
+    if not alias_ok and name is not None:
+        c_names_join = "', '".join(c_names)
+        raise RuntimeError(
+                f"dtype '{dtype}' already registered "
+                f"(as '{name}', new names '{c_names_join}')")
 
     TYPE_REGISTRY.get_or_register_dtype(c_names, dtype)
 
