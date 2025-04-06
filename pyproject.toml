@@ -10,12 +10,10 @@ extend-select = [
     "I",   # flake8-isort
     "N",   # pep8-naming
     "NPY", # numpy
-    "UP",  # pyupgrade
     "Q",   # flake8-quotes
+    "RUF", # ruff
+    "UP",  # pyupgrade
     "W",   # pycodestyle
-
-    # TODO
-    # "RUF", # ruff
 ]
 extend-ignore = [
     "C90",  # McCabe complexity
