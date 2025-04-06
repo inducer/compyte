@@ -67,13 +67,13 @@ def is_f_contiguous_strides(strides, itemsize, shape):
     from pytools import product
     return (
             equal_strides(strides, f_contiguous_strides(itemsize, shape), shape)
-            or product(shape) == 0)  # noqa: W503
+            or product(shape) == 0)
 
 
 def is_c_contiguous_strides(strides, itemsize, shape):
     from pytools import product
     return (equal_strides(strides, c_contiguous_strides(itemsize, shape), shape)
-            or product(shape) == 0)  # noqa: W503
+            or product(shape) == 0)
 
 
 class ArrayFlags:
@@ -177,7 +177,7 @@ except Exception:
         # currently (2014/May/17) on pypy.
 
         if ((shape is None or x.shape == shape)
-                and (strides is None or x.strides == strides)):  # noqa: W503
+                and (strides is None or x.strides == strides)):
             return x
         if not x.dtype.isbuiltin:
             if shape is None:
