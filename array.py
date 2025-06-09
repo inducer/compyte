@@ -23,7 +23,7 @@ THE SOFTWARE.
 import numpy as np
 
 
-def f_contiguous_strides(itemsize, shape):
+def f_contiguous_strides(itemsize: int, shape: tuple[int, ...]) -> tuple[int, ...]:
     if shape:
         strides = [itemsize]
         for s in shape[:-1]:
@@ -36,7 +36,7 @@ def f_contiguous_strides(itemsize, shape):
         return ()
 
 
-def c_contiguous_strides(itemsize, shape):
+def c_contiguous_strides(itemsize: int, shape: tuple[int, ...]) -> tuple[int, ...]:
     if shape:
         strides = [itemsize]
         for s in shape[:0:-1]:
@@ -49,7 +49,10 @@ def c_contiguous_strides(itemsize, shape):
         return ()
 
 
-def equal_strides(strides1, strides2, shape):
+def equal_strides(
+        strides1: tuple[int, ...],
+        strides2: tuple[int, ...],
+        shape: tuple[int, ...]) -> bool:
     if strides1 == strides2:
         return True
 

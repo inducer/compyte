@@ -26,7 +26,11 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from collections.abc import Sequence
+from typing import Any, Callable, TypeVar
+
 import numpy as np
+from numpy.typing import DTypeLike
 
 
 class TypeNameNotKnown(RuntimeError):  # noqa: N818
@@ -36,11 +40,16 @@ class TypeNameNotKnown(RuntimeError):  # noqa: N818
 # {{{ registry
 
 class DTypeRegistry:
+    dtype_to_name: dict[np.dtype[Any] | str, str]
+    name_to_dtype: dict[str, np.dtype[Any]]
+
     def __init__(self):
         self.dtype_to_name = {}
         self.name_to_dtype = {}
 
-    def get_or_register_dtype(self, c_names, dtype=None):
+    def get_or_register_dtype(self,
+                c_names: str | Sequence[str],
+                dtype: DTypeLike | None = None):
         """Get or register a :class:`numpy.dtype` associated with the C type names
         in the string list *c_names*. If *dtype* is `None`, no registration is
         performed, and the :class:`numpy.dtype` must already have been registered.
@@ -94,8 +103,8 @@ class DTypeRegistry:
 
         return dtype
 
-    def dtype_to_ctype(self, dtype):
-        if dtype is None:
+    def dtype_to_ctype(self, dtype: np.dtype[Any]) -> str:
+        if dtype is None:  # pyright: ignore[reportUnnecessaryComparison]
             raise ValueError("dtype may not be None")
 
         dtype = np.dtype(dtype)
@@ -110,7 +119,11 @@ class DTypeRegistry:
 
 # {{{ C types
 
-def fill_registry_with_c_types(reg, respect_windows, include_bool=True):
+def fill_registry_with_c_types(
+            reg: DTypeRegistry,
+            respect_windows: bool,
+            include_bool: bool = True
+        ) -> None:
     import struct
     from sys import platform
 
@@ -157,7 +170,7 @@ def fill_registry_with_c_types(reg, respect_windows, include_bool=True):
     reg.get_or_register_dtype("double", np.float64)
 
 
-def fill_registry_with_opencl_c_types(reg):
+def fill_registry_with_opencl_c_types(reg: DTypeRegistry) -> None:
     reg.get_or_register_dtype(["char", "signed char"], np.int8)
     reg.get_or_register_dtype(["uchar", "unsigned char"], np.uint8)
     reg.get_or_register_dtype(["short", "signed short",
@@ -183,7 +196,7 @@ def fill_registry_with_opencl_c_types(reg):
     reg.get_or_register_dtype("double", np.float64)
 
 
-def fill_registry_with_c99_stdint_types(reg):
+def fill_registry_with_c99_stdint_types(reg: DTypeRegistry) -> None:
     reg.get_or_register_dtype("bool", np.bool_)
 
     reg.get_or_register_dtype("int8_t", np.int8)
@@ -200,7 +213,7 @@ def fill_registry_with_c99_stdint_types(reg):
     reg.get_or_register_dtype("double", np.float64)
 
 
-def fill_registry_with_c99_complex_types(reg):
+def fill_registry_with_c99_complex_types(reg: DTypeRegistry) -> None:
     reg.get_or_register_dtype("float complex", np.complex64)
     reg.get_or_register_dtype("double complex", np.complex128)
     reg.get_or_register_dtype("long double complex", np.clongdouble)
@@ -229,12 +242,21 @@ def _fill_dtype_registry(respect_windows, include_bool=True):
 
 # {{{ c declarator parsing
 
-def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
-        name_to_dtype=None):
+ArgTypeT = TypeVar("ArgTypeT")
+
+
+def parse_c_arg_backend(
+            c_arg: str,
+            scalar_arg_factory: Callable[[np.dtype[Any], str], ArgTypeT],
+            vec_arg_factory: Callable[[np.dtype[Any], str], ArgTypeT],
+            name_to_dtype: Callable[[str], np.dtype[Any]] | DTypeRegistry | None = None,
+        ):
     if isinstance(name_to_dtype, DTypeRegistry):
-        name_to_dtype = name_to_dtype.name_to_dtype__getitem__
+        name_to_dtype_clbl = name_to_dtype.name_to_dtype.__getitem__
     elif name_to_dtype is None:
-        name_to_dtype = NAME_TO_DTYPE.__getitem__
+        name_to_dtype_clbl = NAME_TO_DTYPE.__getitem__
+    else:
+        name_to_dtype_clbl = name_to_dtype
 
     c_arg = (c_arg
             .replace("const", "")
@@ -261,7 +283,7 @@ def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
     tp = " ".join(tp.split())
 
     try:
-        dtype = name_to_dtype(tp)
+        dtype = name_to_dtype_clbl(tp)
     except KeyError:
         raise ValueError(f"unknown type '{tp}'") from None
 
@@ -270,7 +292,11 @@ def parse_c_arg_backend(c_arg, scalar_arg_factory, vec_arg_factory,
 # }}}
 
 
-def register_dtype(dtype, c_names, alias_ok=False):
+def register_dtype(
+            dtype: DTypeLike,
+            c_names: Sequence[str] | str,
+            alias_ok: bool = False
+        ) -> None:
     from warnings import warn
     warn("register_dtype is deprecated. Use get_or_register_dtype instead.",
             DeprecationWarning, stacklevel=2)
