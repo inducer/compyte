@@ -20,7 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from typing import Any, Protocol
+
 import numpy as np
+from typing_extensions import override
 
 
 def f_contiguous_strides(itemsize: int, shape: tuple[int, ...]) -> tuple[int, ...]:
@@ -50,9 +53,10 @@ def c_contiguous_strides(itemsize: int, shape: tuple[int, ...]) -> tuple[int, ..
 
 
 def equal_strides(
-        strides1: tuple[int, ...],
-        strides2: tuple[int, ...],
-        shape: tuple[int, ...]) -> bool:
+            strides1: tuple[int, ...],
+            strides2: tuple[int, ...],
+            shape: tuple[int, ...]
+        ) -> bool:
     if strides1 == strides2:
         return True
 
@@ -66,33 +70,53 @@ def equal_strides(
     return True
 
 
-def is_f_contiguous_strides(strides, itemsize, shape):
+def is_f_contiguous_strides(
+            strides: tuple[int, ...],
+            itemsize: int,
+            shape: tuple[int, ...]
+        ) -> bool:
     from pytools import product
     return (
             equal_strides(strides, f_contiguous_strides(itemsize, shape), shape)
             or product(shape) == 0)
 
 
-def is_c_contiguous_strides(strides, itemsize, shape):
+def is_c_contiguous_strides(
+            strides: tuple[int, ...],
+            itemsize: int,
+            shape: tuple[int, ...]
+        ) -> bool:
     from pytools import product
     return (equal_strides(strides, c_contiguous_strides(itemsize, shape), shape)
             or product(shape) == 0)
 
 
+class ArrayIsh(Protocol):
+    shape: tuple[int, ...]
+    strides: tuple[int, ...]
+    dtype: np.dtype[Any]
+
+
 class ArrayFlags:
-    def __init__(self, ary):
+    f_contiguous: bool
+    c_contiguous: bool
+    forc: bool
+
+    def __init__(self, ary: ArrayIsh):
         self.f_contiguous = is_f_contiguous_strides(
             ary.strides, ary.dtype.itemsize, ary.shape)
         self.c_contiguous = is_c_contiguous_strides(
             ary.strides, ary.dtype.itemsize, ary.shape)
         self.forc = self.f_contiguous or self.c_contiguous
 
+    @override
     def __repr__(self):
         return (
                 f"  C_CONTIGUOUS : {self.c_contiguous}\n"
                 f"  F_CONTIGUOUS : {self.f_contiguous}"
                 )
 
+    @override
     def __str__(self):
         return repr(self)
 
