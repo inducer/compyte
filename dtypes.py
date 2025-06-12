@@ -160,12 +160,6 @@ def fill_registry_with_c_types(
                 f"{i64_name} unsigned int"],
                 np.uint64)
 
-    # https://github.com/numpy/numpy/issues/2610
-    if is_64_bit:
-        reg.get_or_register_dtype([f"unsigned {i64_name}"], np.uintp)
-    else:
-        reg.get_or_register_dtype(["unsigned"], np.uintp)
-
     reg.get_or_register_dtype("float", np.float32)
     reg.get_or_register_dtype("double", np.float64)
 
