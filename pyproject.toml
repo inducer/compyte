@@ -40,6 +40,9 @@ reportUnnecessaryIsInstance = "none"
 reportUnusedCallResult = "none"
 reportExplicitAny = "none"
 reportUnreachable = "hint"
+# array.py looks like stdlib array, but pyright doesn't know this
+# won't ever be a top-level anything.
+reportShadowedImports = "none"
 
 # This reports even cycles that are qualified by 'if TYPE_CHECKING'. Not what
 # we care about at this moment.
