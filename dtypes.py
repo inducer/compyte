@@ -48,8 +48,8 @@ class DTypeRegistry:
         self.name_to_dtype = {}
 
     def get_or_register_dtype(self,
-                c_names: str | Sequence[str],
-                dtype: DTypeLike | None = None):
+                names: str | Sequence[str],
+                dtype: DTypeLike | None = None) -> np.dtype[Any]:
         """Get or register a :class:`numpy.dtype` associated with the C type names
         in the string list *c_names*. If *dtype* is `None`, no registration is
         performed, and the :class:`numpy.dtype` must already have been registered.
@@ -66,12 +66,12 @@ class DTypeRegistry:
         .. versionadded:: 2012.2
         """
 
-        if isinstance(c_names, str):
-            c_names = [c_names]
+        if isinstance(names, str):
+            names = [names]
 
         if dtype is None:
             from pytools import single_valued
-            return single_valued(self.name_to_dtype[name] for name in c_names)
+            return single_valued(self.name_to_dtype[name] for name in names)
 
         dtype = np.dtype(dtype)
 
@@ -86,7 +86,7 @@ class DTypeRegistry:
             assert existing_dtype == dtype
             dtype = existing_dtype
 
-        for nm in c_names:
+        for nm in names:
             try:
                 name_dtype = self.name_to_dtype[nm]
             except KeyError:
@@ -97,13 +97,13 @@ class DTypeRegistry:
                         f"name '{nm}' already registered to different dtype")
 
         if not existed:
-            self.dtype_to_name[dtype] = c_names[0]
+            self.dtype_to_name[dtype] = names[0]
         if str(dtype) not in self.dtype_to_name:
-            self.dtype_to_name[str(dtype)] = c_names[0]
+            self.dtype_to_name[str(dtype)] = names[0]
 
         return dtype
 
-    def dtype_to_ctype(self, dtype: np.dtype[Any]) -> str:
+    def dtype_to_ctype(self, dtype: DTypeLike) -> str:
         if dtype is None:  # pyright: ignore[reportUnnecessaryComparison]
             raise ValueError("dtype may not be None")
 
