@@ -63,7 +63,7 @@ def equal_strides(
     if len(strides1) != len(strides2) or len(strides2) != len(shape):
         return False
 
-    for s, st1, st2 in zip(shape, strides1, strides2):
+    for s, st1, st2 in zip(shape, strides1, strides2, strict=True):
         if s != 1 and st1 != st2:
             return False
 
@@ -145,7 +145,7 @@ def bound(a: ArrayIsh) -> tuple[int, int]:
     high = a.bytes
     low = a.bytes
 
-    for stri, shp in zip(a.strides, a.shape):
+    for stri, shp in zip(a.strides, a.shape, strict=True):
         if stri < 0:
             low += (stri)*(shp-1)
         else:
