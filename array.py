@@ -95,7 +95,6 @@ class ArrayIsh(Protocol):
     shape: tuple[int, ...]
     strides: tuple[int, ...]
     dtype: np.dtype[Any]
-    bytes: int
 
 
 class ArrayFlags:
@@ -139,33 +138,6 @@ def get_common_dtype(obj1: ArrayIsh, obj2: ArrayIsh,
             result = np.dtype(np.complex64)
 
     return result
-
-
-def bound(a: ArrayIsh) -> tuple[int, int]:
-    high = a.bytes
-    low = a.bytes
-
-    for stri, shp in zip(a.strides, a.shape, strict=True):
-        if stri < 0:
-            low += (stri)*(shp-1)
-        else:
-            high += (stri)*(shp-1)
-    return low, high
-
-
-def may_share_memory(a: ArrayIsh, b: ArrayIsh) -> bool:
-    # When this is called with a an ndarray and b
-    # a sparse matrix, numpy.may_share_memory fails.
-    if a is b:
-        return True
-    if a.__class__ is b.__class__:
-        a_l, a_h = bound(a)
-        b_l, b_h = bound(b)
-        if b_l >= a_h or a_l >= b_h:
-            return False
-        return True
-    else:
-        return False
 
 
 # {{{ as_strided implementation
