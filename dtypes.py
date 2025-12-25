@@ -101,7 +101,7 @@ class DTypeRegistry:
 
         return dtype
 
-    def dtype_to_ctype(self, dtype: DTypeLike) -> str:
+    def dtype_to_ctype(self, dtype: DTypeLike | None) -> str:
         if dtype is None:
             raise ValueError("dtype may not be None")
 
