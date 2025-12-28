@@ -101,8 +101,8 @@ class DTypeRegistry:
 
         return dtype
 
-    def dtype_to_ctype(self, dtype: DTypeLike | None) -> str:
-        if dtype is None:
+    def dtype_to_ctype(self, dtype: DTypeLike) -> str:
+        if dtype is None:  # pyright: ignore[reportUnnecessaryComparison]
             raise ValueError("dtype may not be None")
 
         dtype = np.dtype(dtype)
