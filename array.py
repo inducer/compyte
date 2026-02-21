@@ -151,7 +151,7 @@ try:
         raise RuntimeError("numpy's as_strided is broken")
 
     as_strided = _as_strided
-except Exception:
+except Exception:  # noqa: BLE001
     # stolen from numpy to be compatible with older versions of numpy
     class _DummyArray:
         """ Dummy object that just exists to hang __array_interface__ dictionaries
