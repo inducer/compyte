@@ -45,5 +45,5 @@ reportUnreachable = "hint"
 # we care about at this moment.
 # https://github.com/microsoft/pyright/issues/746
 reportImportCycles = "none"
-pythonVersion = "3.10"
+pythonVersion = "3.12"
 pythonPlatform = "All"
