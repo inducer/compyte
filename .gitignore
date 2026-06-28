@@ -19,3 +19,4 @@ distribute*tar.gz
 *.log
 
 .cache
+.venv
