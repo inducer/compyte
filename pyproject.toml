@@ -47,3 +47,7 @@ reportUnreachable = "hint"
 reportImportCycles = "none"
 pythonVersion = "3.12"
 pythonPlatform = "All"
+
+exclude = [
+    ".venv",
+]
