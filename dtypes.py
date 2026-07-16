@@ -33,7 +33,7 @@ import numpy as np
 from numpy.typing import DTypeLike
 
 
-class TypeNameNotKnown(RuntimeError):  # noqa: N818
+class TypeNameNotKnown(RuntimeError):  # ruff:ignore[error-suffix-on-exception-name]
     pass
 
 
